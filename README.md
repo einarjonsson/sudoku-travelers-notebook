@@ -95,7 +95,7 @@ You can also pass optional parameters:
 |  Sudoku 1   |  Sudoku 2   |  } 98mm
 |-------------|-------------|  <-- cut here
 |  Sudoku 3   |  Sudoku 4   |  } 98mm
-        ^cut here
+        ^fold 
 ```
 
 ---
