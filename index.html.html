@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TN Sudoku Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #1a1208;
+    --paper: #f5f0e8;
+    --cream: #ede8db;
+    --accent: #8b4513;
+    --accent-light: #c4703a;
+    --rule: #c8bfaa;
+    --shadow: rgba(26,18,8,0.15);
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 24px;
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 27px,
+        var(--rule) 27px,
+        var(--rule) 28px
+      );
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    line-height: 1.1;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .logo em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .tagline {
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.8;
+  }
+
+  .card {
+    background: #fffdf7;
+    border: 1.5px solid var(--rule);
+    border-radius: 2px;
+    padding: 36px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 4px 4px 0 var(--shadow);
+    position: relative;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 0;
+    bottom: 0;
+    width: 1.5px;
+    background: #e8b4a0;
+    opacity: 0.5;
+  }
+
+  .field {
+    margin-bottom: 28px;
+  }
+
+  label {
+    display: block;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+    padding-left: 28px;
+  }
+
+  .options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding-left: 28px;
+  }
+
+  .option {
+    cursor: pointer;
+  }
+
+  .option input { display: none; }
+
+  .option-label {
+    display: block;
+    border: 1.5px solid var(--rule);
+    border-radius: 2px;
+    padding: 12px 14px;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    transition: all 0.15s ease;
+    background: var(--cream);
+    cursor: pointer;
+  }
+
+  .option-label strong {
+    display: block;
+    font-size: 0.8rem;
+    margin-bottom: 2px;
+  }
+
+  .option input:checked + .option-label {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--paper);
+  }
+
+  .option-label:hover {
+    border-color: var(--accent-light);
+  }
+
+  .count-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-left: 28px;
+  }
+
+  .count-btn {
+    width: 36px;
+    height: 36px;
+    border: 1.5px solid var(--rule);
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'DM Mono', monospace;
+    font-size: 1.2rem;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .count-btn:hover {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: white;
+  }
+
+  .count-display {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    color: var(--ink);
+    min-width: 40px;
+    text-align: center;
+  }
+
+  .count-hint {
+    font-size: 0.65rem;
+    color: var(--accent);
+    opacity: 0.7;
+    line-height: 1.4;
+  }
+
+  .generate-btn {
+    width: calc(100% - 28px);
+    margin-left: 28px;
+    padding: 16px;
+    background: var(--accent);
+    color: var(--paper);
+    border: none;
+    border-radius: 2px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 3px 3px 0 rgba(139,69,19,0.3);
+    margin-top: 8px;
+  }
+
+  .generate-btn:hover:not(:disabled) {
+    background: var(--accent-light);
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0 rgba(139,69,19,0.3);
+  }
+
+  .generate-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .progress {
+    display: none;
+    padding-left: 28px;
+    margin-top: 20px;
+  }
+
+  .progress.visible { display: block; }
+
+  .progress-bar-track {
+    height: 4px;
+    background: var(--cream);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+
+  .progress-text {
+    font-size: 0.65rem;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+  }
+
+  footer {
+    margin-top: 48px;
+    font-size: 0.65rem;
+    color: var(--accent);
+    opacity: 0.6;
+    text-align: center;
+    letter-spacing: 0.08em;
+  }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Traveler's<br><em>Sudoku</em></div>
+  <div class="tagline">Printable inserts for your notebook</div>
+</header>
+
+<div class="card">
+
+  <div class="field">
+    <label>Notebook Size</label>
+    <div class="options">
+      <label class="option">
+        <input type="radio" name="size" value="regular" checked>
+        <span class="option-label">
+          <strong>Regular</strong>
+          110mm panels<br>fold + cut
+        </span>
+      </label>
+      <label class="option">
+        <input type="radio" name="size" value="passport">
+        <span class="option-label">
+          <strong>Passport</strong>
+          134×98mm<br>cut only
+        </span>
+      </label>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Number of Pages</label>
+    <div class="count-row">
+      <button class="count-btn" id="decBtn">−</button>
+      <input type="number" id="countDisplay" value="1" min="1" max="999" style="font-family: 'DM Serif Display', serif; font-size: 2rem; color: var(--ink); width: 70px; text-align: center; border: 1.5px solid var(--rule); border-radius: 2px; background: var(--cream); padding: 4px; -moz-appearance: textfield;">
+      <button class="count-btn" id="incBtn">+</button>
+      <div class="count-hint" id="countHint">= 8 sudokus</div>
+    </div>
+  </div>
+
+  <button class="generate-btn" id="generateBtn">Generate PDF</button>
+
+  <div class="progress" id="progress">
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-text" id="progressText">Generating puzzles...</div>
+  </div>
+
+</div>
+
+<footer>
+  generates a fresh puzzle every time &nbsp;·&nbsp; print on A4 landscape
+</footer>
+
+<script>
+const { jsPDF } = window.jspdf;
+
+let pageCount = 1;
+document.getElementById('countDisplay').addEventListener('input', function() {
+  const v = parseInt(this.value);
+  if (!isNaN(v) && v >= 1) { pageCount = v; updateHint(); }
+});
+const countDisplay = document.getElementById('countDisplay');
+const countHint = document.getElementById('countHint');
+const decBtn = document.getElementById('decBtn');
+const incBtn = document.getElementById('incBtn');
+const generateBtn = document.getElementById('generateBtn');
+const progress = document.getElementById('progress');
+const progressFill = document.getElementById('progressFill');
+const progressText = document.getElementById('progressText');
+
+function getSize() {
+  return document.querySelector('input[name="size"]:checked').value;
+}
+
+function updateHint() {
+  const size = getSize();
+  const puzzles = size === 'passport' ? pageCount * 8 : pageCount * 8;
+  countHint.textContent = `= ${puzzles} sudokus`;
+}
+
+document.querySelectorAll('input[name="size"]').forEach(r => r.addEventListener('change', updateHint));
+
+decBtn.addEventListener('click', () => {
+  if (pageCount > 1) { pageCount--;  updateHint(); }
+});
+incBtn.addEventListener('click', () => {
+  if (pageCount < 20) { pageCount++;  updateHint(); }
+});
+
+// ── Sudoku logic ──────────────────────────────────────────────────────────────
+function isValid(board, row, col, num) {
+  for (let c = 0; c < 9; c++) if (board[row][c] === num) return false;
+  for (let r = 0; r < 9; r++) if (board[r][col] === num) return false;
+  const br = Math.floor(row/3)*3, bc = Math.floor(col/3)*3;
+  for (let r = br; r < br+3; r++)
+    for (let c = bc; c < bc+3; c++)
+      if (board[r][c] === num) return false;
+  return true;
+}
+
+function shuffle(arr) {
+  for (let i = arr.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+
+function solve(board) {
+  for (let r = 0; r < 9; r++) {
+    for (let c = 0; c < 9; c++) {
+      if (board[r][c] === 0) {
+        const nums = shuffle([1,2,3,4,5,6,7,8,9]);
+        for (const n of nums) {
+          if (isValid(board, r, c, n)) {
+            board[r][c] = n;
+            if (solve(board)) return true;
+            board[r][c] = 0;
+          }
+        }
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+function generateSudoku() {
+  const board = Array.from({length:9}, () => Array(9).fill(0));
+  solve(board);
+  const cells = [];
+  for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) cells.push([r,c]);
+  shuffle(cells);
+  for (const [r,c] of cells.slice(0,45)) board[r][c] = 0;
+  return board;
+}
+
+// ── PDF drawing ───────────────────────────────────────────────────────────────
+const MM = 1; // jsPDF uses mm natively
+
+function drawSudoku(doc, ox, oy, size, puzzle, number, labelFs=3) {
+  const cell = size / 9;
+  // Label
+  doc.setFontSize(labelFs * 2.5);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0,0,0);
+  doc.setFillColor(255,255,255);
+  doc.rect(ox, oy - labelFs*1.2, doc.getTextWidth(`Sudoku ${number}`) + 2, labelFs*1.5, 'F');
+  doc.text(`Sudoku ${number}`, ox + 1, oy - labelFs*0.2);
+
+  // Numbers
+  for (let row = 0; row < 9; row++) {
+    for (let col = 0; col < 9; col++) {
+      const val = puzzle[row][col];
+      if (val !== 0) {
+        const x = ox + col * cell;
+        const y = oy + row * cell;
+        doc.setFontSize(cell * 1.8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(0,0,0);
+        const tw = doc.getTextWidth(String(val));
+        doc.text(String(val), x + (cell - tw)/2, y + cell * 0.72);
+      }
+    }
+  }
+
+  // Grid lines
+  doc.setDrawColor(0,0,0);
+  for (let i = 0; i <= 9; i++) {
+    doc.setLineWidth(i % 3 === 0 ? 0.5 : 0.18);
+    doc.line(ox, oy + i*cell, ox + size, oy + i*cell);
+    doc.line(ox + i*cell, oy, ox + i*cell, oy + size);
+  }
+}
+
+function drawRegularSide(doc, puzzles, startIdx, sideLabel) {
+  const W = 297, H = 210; // landscape A4
+  const colW = 110, margin = 5;
+  const halfH = H / 2;
+  const sudSize = Math.min(colW - 2*margin, halfH - 14);
+  const vGap = (halfH - sudSize) / 2;
+
+  const positions = [
+    [0, 0, startIdx],
+    [0, 1, startIdx+1],
+    [1, 0, startIdx+2],
+    [1, 1, startIdx+3],
+  ];
+  for (const [col, row, num] of positions) {
+    const ox = col * colW + margin;
+    const oy = row * halfH + vGap;
+    drawSudoku(doc, ox, oy, sudSize, puzzles[num-1], num, 3);
+  }
+
+  // Fold line at 110mm
+  doc.setDrawColor(100,100,100);
+  doc.setLineWidth(0.25);
+  doc.setLineDashPattern([2,1.5], 0);
+  doc.line(colW, 0, colW, H);
+
+  // Cut line at 220mm
+  doc.setLineDashPattern([0.8,2], 0);
+  doc.setDrawColor(80,80,80);
+  doc.line(2*colW, 0, 2*colW, H);
+  doc.setLineDashPattern([], 0);
+
+  // Horizontal centre guide
+  doc.setDrawColor(180,180,180);
+  doc.setLineWidth(0.12);
+  doc.setLineDashPattern([1,2], 0);
+  doc.line(0, halfH, 2*colW, halfH);
+  doc.setLineDashPattern([], 0);
+
+  // Legend
+  doc.setFontSize(4);
+  doc.setFont('helvetica','normal');
+  doc.setTextColor(120,120,120);
+  doc.text('--- fold at 110mm', 2*colW+2, halfH-4);
+  doc.text('... cut at 220mm', 2*colW+2, halfH);
+  doc.text(sideLabel, 2*colW+2, halfH+4);
+}
+
+function drawPassportSide(doc, puzzles, startIdx, sideLabel) {
+  const W = 297, H = 210;
+  const pw = 134, ph = 98;
+  const totalW = pw*2, totalH = ph*2;
+  const startX = (W - totalW) / 2;
+  const startY = (H - totalH) / 2;
+  const labelH = 8;
+  const gridSize = Math.min(pw - 8, ph - 8 - labelH);
+  const vOff = (ph - gridSize - labelH) / 2;
+  const hOff = (pw - gridSize) / 2;
+
+  const panels = [
+    [0, 0, startIdx],
+    [1, 0, startIdx+1],
+    [0, 1, startIdx+2],
+    [1, 1, startIdx+3],
+  ];
+  for (const [col, row, num] of panels) {
+    const ox = startX + col*pw + hOff;
+    const oy = startY + row*ph + vOff;
+    drawSudoku(doc, ox, oy, gridSize, puzzles[num-1], num, 2.5);
+  }
+
+  // Borders
+  doc.setDrawColor(160,160,160);
+  doc.setLineWidth(0.15);
+  doc.setLineDashPattern([], 0);
+  for (let col = 0; col < 2; col++)
+    for (let row = 0; row < 2; row++)
+      doc.rect(startX + col*pw, startY + row*ph, pw, ph);
+
+  // Cut lines
+  doc.setDrawColor(80,80,80);
+  doc.setLineWidth(0.25);
+  doc.setLineDashPattern([0.8,2], 0);
+  doc.line(startX+pw, startY-4, startX+pw, startY+totalH+4);
+  doc.line(startX-4, startY+ph, startX+totalW+4, startY+ph);
+  doc.setLineDashPattern([], 0);
+
+  // Legend
+  doc.setFontSize(4);
+  doc.setFont('helvetica','normal');
+  doc.setTextColor(120,120,120);
+  doc.text('... cut horizontally and vertically at centre | ' + sideLabel, W/2, startY - 4, {align:'center'});
+}
+
+// ── Generate ──────────────────────────────────────────────────────────────────
+generateBtn.addEventListener('click', async () => {
+  const size = getSize();
+  const pages = parseInt(document.getElementById("countDisplay").value) || 1;
+  const total = pages * 8;
+
+  generateBtn.disabled = true;
+  progress.classList.add('visible');
+
+  await new Promise(r => setTimeout(r, 50));
+
+  const puzzles = [];
+  for (let i = 0; i < total; i++) {
+    setProgress(i / total * 60, `Generating puzzle ${i+1} of ${total}...`);
+    await new Promise(r => setTimeout(r, 0));
+    puzzles.push(generateSudoku());
+  }
+
+  setProgress(70, 'Building PDF...');
+  await new Promise(r => setTimeout(r, 50));
+
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+  for (let p = 0; p < pages; p++) {
+    const base = p * 8;
+    const label1 = `Page ${p+1} of ${pages} - Side 1, print first`;
+    const label2 = `Page ${p+1} of ${pages} - Side 2, flip on short edge`;
+
+    if (p > 0) doc.addPage();
+
+    if (size === 'regular') {
+      drawRegularSide(doc, puzzles, base+1, label1);
+      doc.addPage();
+      drawRegularSide(doc, puzzles, base+5, label2);
+    } else {
+      drawPassportSide(doc, puzzles, base+1, label1);
+      doc.addPage();
+      drawPassportSide(doc, puzzles, base+5, label2);
+    }
+
+    setProgress(70 + (p+1)/pages*28, `Building page ${p+1}...`);
+    await new Promise(r => setTimeout(r, 0));
+  }
+
+  setProgress(100, 'Done! Downloading...');
+  await new Promise(r => setTimeout(r, 300));
+
+  doc.save(`tn-sudoku-${size}-${pages}pages.pdf`);
+
+  generateBtn.disabled = false;
+  progress.classList.remove('visible');
+  progressFill.style.width = '0%';
+});
+
+function setProgress(pct, text) {
+  progressFill.style.width = pct + '%';
+  progressText.textContent = text;
+}
+
+updateHint();
+</script>
+</body>
+</html>
