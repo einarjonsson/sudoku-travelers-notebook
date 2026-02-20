@@ -7,255 +7,136 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap');
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --ink: #1a1208;
-    --paper: #f5f0e8;
-    --cream: #ede8db;
-    --accent: #8b4513;
-    --accent-light: #c4703a;
-    --rule: #c8bfaa;
-    --shadow: rgba(26,18,8,0.15);
+    --ink: #1a1208; --paper: #f5f0e8; --cream: #ede8db;
+    --accent: #8b4513; --accent-light: #c4703a; --rule: #c8bfaa;
+    --shadow: rgba(26,18,8,0.15); --green: #3a7c52; --green-light: #edf7f1;
+    --orange: #c4703a; --orange-light: #fdf3ec;
   }
-
   body {
-    background: var(--paper);
-    color: var(--ink);
+    background: var(--paper); color: var(--ink);
     font-family: 'DM Mono', monospace;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 48px 24px;
-    background-image:
-      repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 27px,
-        var(--rule) 27px,
-        var(--rule) 28px
-      );
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; padding: 48px 24px;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 27px, var(--rule) 27px, var(--rule) 28px);
   }
-
-  header {
-    text-align: center;
-    margin-bottom: 48px;
-  }
-
-  .logo {
-    font-family: 'DM Serif Display', serif;
-    font-size: clamp(2rem, 6vw, 3.5rem);
-    line-height: 1.1;
-    color: var(--ink);
-    margin-bottom: 8px;
-  }
-
-  .logo em {
-    font-style: italic;
-    color: var(--accent);
-  }
-
-  .tagline {
-    font-size: 0.75rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--accent);
-    opacity: 0.8;
-  }
-
+  header { text-align: center; margin-bottom: 48px; }
+  .logo { font-family: 'DM Serif Display', serif; font-size: clamp(2rem, 6vw, 3.5rem); line-height: 1.1; margin-bottom: 8px; }
+  .logo em { font-style: italic; color: var(--accent); }
+  .tagline { font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); opacity: 0.8; }
   .card {
-    background: #fffdf7;
-    border: 1.5px solid var(--rule);
-    border-radius: 2px;
-    padding: 36px;
-    width: 100%;
-    max-width: 480px;
-    box-shadow: 4px 4px 0 var(--shadow);
-    position: relative;
+    background: #fffdf7; border: 1.5px solid var(--rule); border-radius: 2px;
+    padding: 36px; width: 100%; max-width: 480px;
+    box-shadow: 4px 4px 0 var(--shadow); position: relative;
   }
-
   .card::before {
-    content: '';
-    position: absolute;
-    left: 20px;
-    top: 0;
-    bottom: 0;
-    width: 1.5px;
-    background: #e8b4a0;
-    opacity: 0.5;
+    content: ''; position: absolute; left: 20px; top: 0; bottom: 0;
+    width: 1.5px; background: #e8b4a0; opacity: 0.5;
   }
-
-  .field {
-    margin-bottom: 28px;
-  }
-
+  .field { margin-bottom: 28px; }
   label {
-    display: block;
-    font-size: 0.7rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 10px;
-    padding-left: 28px;
+    display: block; font-size: 0.7rem; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 10px; padding-left: 28px;
   }
-
-  .options {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    padding-left: 28px;
-  }
-
-  .option {
-    cursor: pointer;
-  }
-
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding-left: 28px; }
+  .option { cursor: pointer; }
   .option input { display: none; }
-
   .option-label {
-    display: block;
-    border: 1.5px solid var(--rule);
-    border-radius: 2px;
-    padding: 12px 14px;
-    font-size: 0.75rem;
-    line-height: 1.4;
-    transition: all 0.15s ease;
-    background: var(--cream);
-    cursor: pointer;
+    display: block; border: 1.5px solid var(--rule); border-radius: 2px;
+    padding: 12px 14px; font-size: 0.75rem; line-height: 1.4;
+    transition: all 0.15s ease; background: var(--cream); cursor: pointer;
   }
-
-  .option-label strong {
-    display: block;
-    font-size: 0.8rem;
-    margin-bottom: 2px;
-  }
-
-  .option input:checked + .option-label {
-    border-color: var(--accent);
-    background: var(--accent);
-    color: var(--paper);
-  }
-
-  .option-label:hover {
-    border-color: var(--accent-light);
-  }
-
-  .count-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding-left: 28px;
-  }
-
+  .option-label strong { display: block; font-size: 0.8rem; margin-bottom: 2px; }
+  .option input:checked + .option-label { border-color: var(--accent); background: var(--accent); color: var(--paper); }
+  .option-label:hover { border-color: var(--accent-light); }
+  .count-row { display: flex; align-items: center; gap: 12px; padding-left: 28px; }
   .count-btn {
-    width: 36px;
-    height: 36px;
-    border: 1.5px solid var(--rule);
-    background: var(--cream);
-    color: var(--ink);
-    font-family: 'DM Mono', monospace;
-    font-size: 1.2rem;
-    cursor: pointer;
-    border-radius: 2px;
-    transition: all 0.15s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+    width: 36px; height: 36px; border: 1.5px solid var(--rule);
+    background: var(--cream); color: var(--ink); font-family: 'DM Mono', monospace;
+    font-size: 1.2rem; cursor: pointer; border-radius: 2px; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
+  .count-btn:hover { border-color: var(--accent); background: var(--accent); color: white; }
+  .count-hint { font-size: 0.65rem; color: var(--accent); opacity: 0.7; line-height: 1.4; }
 
-  .count-btn:hover {
-    border-color: var(--accent);
-    background: var(--accent);
-    color: white;
+  /* Duplex banner */
+  .duplex-banner {
+    margin: 0 0 24px 28px; padding: 10px 14px; border-radius: 2px;
+    font-size: 0.7rem; line-height: 1.5; border: 1.5px solid;
+    display: flex; align-items: flex-start; gap: 8px;
   }
-
-  .count-display {
-    font-family: 'DM Serif Display', serif;
-    font-size: 2rem;
-    color: var(--ink);
-    min-width: 40px;
-    text-align: center;
-  }
-
-  .count-hint {
-    font-size: 0.65rem;
-    color: var(--accent);
-    opacity: 0.7;
-    line-height: 1.4;
-  }
+  .duplex-banner.supported { background: var(--green-light); border-color: var(--green); color: var(--green); }
+  .duplex-banner.manual { background: var(--orange-light); border-color: var(--orange); color: var(--orange); }
+  .duplex-banner .icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
 
   .generate-btn {
-    width: calc(100% - 28px);
-    margin-left: 28px;
-    padding: 16px;
-    background: var(--accent);
-    color: var(--paper);
-    border: none;
-    border-radius: 2px;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.8rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 3px 3px 0 rgba(139,69,19,0.3);
-    margin-top: 8px;
+    width: calc(100% - 28px); margin-left: 28px; padding: 16px;
+    background: var(--accent); color: var(--paper); border: none; border-radius: 2px;
+    font-family: 'DM Mono', monospace; font-size: 0.8rem; letter-spacing: 0.1em;
+    text-transform: uppercase; cursor: pointer; transition: all 0.2s;
+    box-shadow: 3px 3px 0 rgba(139,69,19,0.3); margin-top: 8px;
   }
+  .generate-btn:hover:not(:disabled) { background: var(--accent-light); transform: translate(-1px,-1px); box-shadow: 4px 4px 0 rgba(139,69,19,0.3); }
+  .generate-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-  .generate-btn:hover:not(:disabled) {
-    background: var(--accent-light);
-    transform: translate(-1px, -1px);
-    box-shadow: 4px 4px 0 rgba(139,69,19,0.3);
-  }
-
-  .generate-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .progress {
-    display: none;
-    padding-left: 28px;
-    margin-top: 20px;
-  }
-
+  .progress { display: none; padding-left: 28px; margin-top: 20px; }
   .progress.visible { display: block; }
+  .progress-bar-track { height: 4px; background: var(--cream); border-radius: 2px; overflow: hidden; margin-bottom: 8px; }
+  .progress-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s ease; width: 0%; }
+  .progress-text { font-size: 0.65rem; color: var(--accent); letter-spacing: 0.08em; }
 
-  .progress-bar-track {
-    height: 4px;
-    background: var(--cream);
-    border-radius: 2px;
-    overflow: hidden;
-    margin-bottom: 8px;
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(26,18,8,0.55); z-index: 100;
+    align-items: center; justify-content: center; padding: 24px;
   }
+  .modal-overlay.visible { display: flex; }
+  .modal {
+    background: #fffdf7; border: 1.5px solid var(--rule); border-radius: 2px;
+    padding: 36px; max-width: 440px; width: 100%;
+    box-shadow: 6px 6px 0 var(--shadow); position: relative;
+  }
+  .modal::before {
+    content: ''; position: absolute; left: 18px; top: 0; bottom: 0;
+    width: 1.5px; background: #e8b4a0; opacity: 0.5;
+  }
+  .modal-title {
+    font-family: 'DM Serif Display', serif; font-size: 1.4rem;
+    margin-bottom: 6px; padding-left: 28px;
+  }
+  .modal-subtitle { font-size: 0.65rem; color: var(--accent); opacity: 0.7; margin-bottom: 24px; padding-left: 28px; letter-spacing: 0.08em; }
+  .steps { padding-left: 28px; }
+  .step {
+    display: flex; gap: 12px; margin-bottom: 16px; align-items: flex-start;
+  }
+  .step-num {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--accent); color: white; font-size: 0.7rem;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .step-num.done { background: var(--green); }
+  .step-text { font-size: 0.75rem; line-height: 1.5; color: var(--ink); }
+  .step-text strong { color: var(--accent); }
+  .modal-btn {
+    margin-left: 28px; margin-top: 24px; padding: 13px 24px;
+    background: var(--accent); color: var(--paper); border: none; border-radius: 2px;
+    font-family: 'DM Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em;
+    text-transform: uppercase; cursor: pointer; transition: all 0.15s;
+    box-shadow: 3px 3px 0 rgba(139,69,19,0.3);
+  }
+  .modal-btn:hover { background: var(--accent-light); }
+  .modal-btn.secondary {
+    background: transparent; color: var(--accent); box-shadow: none;
+    border: 1.5px solid var(--rule); margin-left: 8px;
+  }
+  .modal-btn.secondary:hover { border-color: var(--accent); }
 
-  .progress-bar-fill {
-    height: 100%;
-    background: var(--accent);
-    border-radius: 2px;
-    transition: width 0.3s ease;
-    width: 0%;
-  }
-
-  .progress-text {
-    font-size: 0.65rem;
-    color: var(--accent);
-    letter-spacing: 0.08em;
-  }
-
-  footer {
-    margin-top: 48px;
-    font-size: 0.65rem;
-    color: var(--accent);
-    opacity: 0.6;
-    text-align: center;
-    letter-spacing: 0.08em;
-  }
-  input[type=number]::-webkit-inner-spin-button,
-  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  footer { margin-top: 48px; font-size: 0.65rem; color: var(--accent); opacity: 0.6; text-align: center; letter-spacing: 0.08em; }
+  input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; }
 </style>
 </head>
 <body>
@@ -266,23 +147,16 @@
 </header>
 
 <div class="card">
-
   <div class="field">
     <label>Notebook Size</label>
     <div class="options">
       <label class="option">
         <input type="radio" name="size" value="regular" checked>
-        <span class="option-label">
-          <strong>Regular</strong>
-          110mm panels<br>fold + cut
-        </span>
+        <span class="option-label"><strong>Regular</strong>110mm panels<br>fold + cut</span>
       </label>
       <label class="option">
         <input type="radio" name="size" value="passport">
-        <span class="option-label">
-          <strong>Passport</strong>
-          134×98mm<br>cut only
-        </span>
+        <span class="option-label"><strong>Passport</strong>134×98mm<br>cut only</span>
       </label>
     </div>
   </div>
@@ -291,36 +165,54 @@
     <label>Number of Pages</label>
     <div class="count-row">
       <button class="count-btn" id="decBtn">−</button>
-      <input type="number" id="countDisplay" value="1" min="1" max="999" style="font-family: 'DM Serif Display', serif; font-size: 2rem; color: var(--ink); width: 70px; text-align: center; border: 1.5px solid var(--rule); border-radius: 2px; background: var(--cream); padding: 4px; -moz-appearance: textfield;">
+      <input type="number" id="countDisplay" value="1" min="1" max="999"
+        style="font-family:'DM Serif Display',serif;font-size:2rem;color:var(--ink);width:70px;text-align:center;border:1.5px solid var(--rule);border-radius:2px;background:var(--cream);padding:4px;">
       <button class="count-btn" id="incBtn">+</button>
       <div class="count-hint" id="countHint">= 8 sudokus</div>
+    </div>
+  </div>
+
+  <div class="field" style="margin-bottom:16px;">
+    <label>Printer</label>
+    <div id="duplexBanner" class="duplex-banner manual">
+      <span class="icon">⏳</span>
+      <span id="duplexText">Checking printer support...</span>
     </div>
   </div>
 
   <button class="generate-btn" id="generateBtn">Generate PDF</button>
 
   <div class="progress" id="progress">
-    <div class="progress-bar-track">
-      <div class="progress-bar-fill" id="progressFill"></div>
-    </div>
+    <div class="progress-bar-track"><div class="progress-bar-fill" id="progressFill"></div></div>
     <div class="progress-text" id="progressText">Generating puzzles...</div>
   </div>
-
 </div>
 
-<footer>
-  generates a fresh puzzle every time &nbsp;·&nbsp; print on A4 landscape
-</footer>
+<footer>generates a fresh puzzle every time &nbsp;·&nbsp; print on A4 landscape</footer>
+
+<!-- Manual duplex modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title">Two-step printing</div>
+    <div class="modal-subtitle" id="modalSubtitle">YOUR PRINTER DOESN'T SUPPORT AUTOMATIC DOUBLE-SIDED PRINTING</div>
+    <div class="steps" id="modalSteps"></div>
+    <div>
+      <button class="modal-btn" id="modalBtn1">Download Side 1</button>
+      <button class="modal-btn secondary" id="modalClose">Close</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const { jsPDF } = window.jspdf;
 
 let pageCount = 1;
-document.getElementById('countDisplay').addEventListener('input', function() {
-  const v = parseInt(this.value);
-  if (!isNaN(v) && v >= 1) { pageCount = v; updateHint(); }
-});
-const countDisplay = document.getElementById('countDisplay');
+let duplexSupported = false;
+let generatedPuzzles = null;
+let generatedSize = null;
+let generatedPages = null;
+
+const countInput = document.getElementById('countDisplay');
 const countHint = document.getElementById('countHint');
 const decBtn = document.getElementById('decBtn');
 const incBtn = document.getElementById('incBtn');
@@ -328,209 +220,201 @@ const generateBtn = document.getElementById('generateBtn');
 const progress = document.getElementById('progress');
 const progressFill = document.getElementById('progressFill');
 const progressText = document.getElementById('progressText');
+const duplexBanner = document.getElementById('duplexBanner');
+const duplexText = document.getElementById('duplexText');
+const modalOverlay = document.getElementById('modalOverlay');
+const modalBtn1 = document.getElementById('modalBtn1');
+const modalClose = document.getElementById('modalClose');
 
-function getSize() {
-  return document.querySelector('input[name="size"]:checked').value;
+// ── Duplex detection ──────────────────────────────────────────────────────────
+function detectDuplex() {
+  // Use the CSS media query approach + navigator hints
+  const mm = window.matchMedia('print');
+  // Check via navigator.userAgentData or legacy navigator hints
+  // We can also use the PrintEvent API where available
+  // Realistically, browser APIs don't expose duplex reliably —
+  // but we can check via a hidden print iframe and CSS @media
+  // Best available: check if matchMedia supports 'duplex' media feature
+  const canQuery = window.CSS && CSS.supports('color', 'red');
+  
+  // Try the newer CSS media feature for duplex
+  let supported = false;
+  try {
+    // This works in some Chromium builds
+    supported = window.matchMedia('(duplex: duplex)').matches;
+  } catch(e) {}
+
+  // Fallback: check navigator for clues
+  if (!supported) {
+    const ua = navigator.userAgent.toLowerCase();
+    // On most modern desktop browsers, we just can't know for sure
+    // so we default to manual with an option to override
+    supported = false;
+  }
+
+  duplexSupported = supported;
+  updateDuplexBanner();
 }
 
+function updateDuplexBanner() {
+  if (duplexSupported) {
+    duplexBanner.className = 'duplex-banner supported';
+    duplexBanner.innerHTML = `<span class="icon">✓</span><span>Your printer supports double-sided printing — one PDF will be generated.</span>`;
+  } else {
+    duplexBanner.className = 'duplex-banner manual';
+    duplexBanner.innerHTML = `
+      <span class="icon">⚠</span>
+      <span>Couldn't confirm duplex support. Two PDFs will be generated — Side 1 first, then Side 2 after reinserting the paper.
+      <br><a href="#" id="duplexOverride" style="color:var(--accent);font-size:0.65rem;">My printer does support it →</a></span>`;
+    document.getElementById('duplexOverride')?.addEventListener('click', e => {
+      e.preventDefault(); duplexSupported = true; updateDuplexBanner();
+    });
+  }
+}
+
+detectDuplex();
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
+function getSize() { return document.querySelector('input[name="size"]:checked').value; }
+
 function updateHint() {
-  const size = getSize();
-  const puzzles = size === 'passport' ? pageCount * 8 : pageCount * 8;
-  countHint.textContent = `= ${puzzles} sudokus`;
+  pageCount = parseInt(countInput.value) || 1;
+  countHint.textContent = `= ${pageCount * 8} sudokus`;
 }
 
 document.querySelectorAll('input[name="size"]').forEach(r => r.addEventListener('change', updateHint));
-
-decBtn.addEventListener('click', () => {
-  if (pageCount > 1) { pageCount--;  updateHint(); }
-});
-incBtn.addEventListener('click', () => {
-  if (pageCount < 20) { pageCount++;  updateHint(); }
-});
+countInput.addEventListener('input', updateHint);
+decBtn.addEventListener('click', () => { if (pageCount > 1) { pageCount--; countInput.value = pageCount; updateHint(); } });
+incBtn.addEventListener('click', () => { pageCount++; countInput.value = pageCount; updateHint(); });
 
 // ── Sudoku logic ──────────────────────────────────────────────────────────────
 function isValid(board, row, col, num) {
   for (let c = 0; c < 9; c++) if (board[row][c] === num) return false;
   for (let r = 0; r < 9; r++) if (board[r][col] === num) return false;
   const br = Math.floor(row/3)*3, bc = Math.floor(col/3)*3;
-  for (let r = br; r < br+3; r++)
-    for (let c = bc; c < bc+3; c++)
-      if (board[r][c] === num) return false;
+  for (let r = br; r < br+3; r++) for (let c = bc; c < bc+3; c++) if (board[r][c] === num) return false;
   return true;
 }
-
 function shuffle(arr) {
-  for (let i = arr.length-1; i > 0; i--) {
-    const j = Math.floor(Math.random()*(i+1));
-    [arr[i],arr[j]] = [arr[j],arr[i]];
-  }
+  for (let i = arr.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
   return arr;
 }
-
 function solve(board) {
-  for (let r = 0; r < 9; r++) {
-    for (let c = 0; c < 9; c++) {
-      if (board[r][c] === 0) {
-        const nums = shuffle([1,2,3,4,5,6,7,8,9]);
-        for (const n of nums) {
-          if (isValid(board, r, c, n)) {
-            board[r][c] = n;
-            if (solve(board)) return true;
-            board[r][c] = 0;
-          }
-        }
-        return false;
+  for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
+    if (board[r][c] === 0) {
+      for (const n of shuffle([1,2,3,4,5,6,7,8,9])) {
+        if (isValid(board,r,c,n)) { board[r][c]=n; if(solve(board)) return true; board[r][c]=0; }
       }
+      return false;
     }
   }
   return true;
 }
-
 function generateSudoku() {
-  const board = Array.from({length:9}, () => Array(9).fill(0));
+  const board = Array.from({length:9}, ()=>Array(9).fill(0));
   solve(board);
-  const cells = [];
-  for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) cells.push([r,c]);
-  shuffle(cells);
-  for (const [r,c] of cells.slice(0,45)) board[r][c] = 0;
+  const cells = []; for (let r=0;r<9;r++) for (let c=0;c<9;c++) cells.push([r,c]);
+  shuffle(cells); for (const [r,c] of cells.slice(0,45)) board[r][c]=0;
   return board;
 }
 
 // ── PDF drawing ───────────────────────────────────────────────────────────────
-const MM = 1; // jsPDF uses mm natively
-
 function drawSudoku(doc, ox, oy, size, puzzle, number, labelFs=3) {
-  const cell = size / 9;
-  // Label
-  doc.setFontSize(labelFs * 2.5);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(0,0,0);
+  const cell = size/9;
+  doc.setFontSize(labelFs*2.5); doc.setFont('helvetica','bold'); doc.setTextColor(0,0,0);
   doc.setFillColor(255,255,255);
-  doc.rect(ox, oy - labelFs*1.2, doc.getTextWidth(`Sudoku ${number}`) + 2, labelFs*1.5, 'F');
-  doc.text(`Sudoku ${number}`, ox + 1, oy - labelFs*0.2);
-
-  // Numbers
-  for (let row = 0; row < 9; row++) {
-    for (let col = 0; col < 9; col++) {
-      const val = puzzle[row][col];
-      if (val !== 0) {
-        const x = ox + col * cell;
-        const y = oy + row * cell;
-        doc.setFontSize(cell * 1.8);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(0,0,0);
-        const tw = doc.getTextWidth(String(val));
-        doc.text(String(val), x + (cell - tw)/2, y + cell * 0.72);
-      }
+  doc.rect(ox, oy-labelFs*1.2, doc.getTextWidth(`Sudoku ${number}`)+2, labelFs*1.5, 'F');
+  doc.text(`Sudoku ${number}`, ox+1, oy-labelFs*0.2);
+  for (let row=0; row<9; row++) for (let col=0; col<9; col++) {
+    const val = puzzle[row][col];
+    if (val !== 0) {
+      const x=ox+col*cell, y=oy+row*cell;
+      doc.setFontSize(cell*1.8); doc.setFont('helvetica','normal'); doc.setTextColor(0,0,0);
+      const tw=doc.getTextWidth(String(val));
+      doc.text(String(val), x+(cell-tw)/2, y+cell*0.72);
     }
   }
-
-  // Grid lines
   doc.setDrawColor(0,0,0);
-  for (let i = 0; i <= 9; i++) {
-    doc.setLineWidth(i % 3 === 0 ? 0.5 : 0.18);
-    doc.line(ox, oy + i*cell, ox + size, oy + i*cell);
-    doc.line(ox + i*cell, oy, ox + i*cell, oy + size);
+  for (let i=0; i<=9; i++) {
+    doc.setLineWidth(i%3===0?0.5:0.18);
+    doc.line(ox, oy+i*cell, ox+size, oy+i*cell);
+    doc.line(ox+i*cell, oy, ox+i*cell, oy+size);
   }
 }
 
 function drawRegularSide(doc, puzzles, startIdx, sideLabel) {
-  const W = 297, H = 210; // landscape A4
-  const colW = 110, margin = 5;
-  const halfH = H / 2;
-  const sudSize = Math.min(colW - 2*margin, halfH - 14);
-  const vGap = (halfH - sudSize) / 2;
-
-  const positions = [
-    [0, 0, startIdx],
-    [0, 1, startIdx+1],
-    [1, 0, startIdx+2],
-    [1, 1, startIdx+3],
-  ];
-  for (const [col, row, num] of positions) {
-    const ox = col * colW + margin;
-    const oy = row * halfH + vGap;
-    drawSudoku(doc, ox, oy, sudSize, puzzles[num-1], num, 3);
+  const W=297, H=210, colW=110, margin=5, halfH=H/2;
+  const sudSize=Math.min(colW-2*margin, halfH-14), vGap=(halfH-sudSize)/2;
+  for (const [col,row,num] of [[0,0,startIdx],[0,1,startIdx+1],[1,0,startIdx+2],[1,1,startIdx+3]]) {
+    drawSudoku(doc, col*colW+margin, row*halfH+vGap, sudSize, puzzles[num-1], num, 3);
   }
-
-  // Fold line at 110mm
-  doc.setDrawColor(100,100,100);
-  doc.setLineWidth(0.25);
-  doc.setLineDashPattern([2,1.5], 0);
-  doc.line(colW, 0, colW, H);
-
-  // Cut line at 220mm
-  doc.setLineDashPattern([0.8,2], 0);
-  doc.setDrawColor(80,80,80);
-  doc.line(2*colW, 0, 2*colW, H);
-  doc.setLineDashPattern([], 0);
-
-  // Horizontal centre guide
-  doc.setDrawColor(180,180,180);
-  doc.setLineWidth(0.12);
-  doc.setLineDashPattern([1,2], 0);
-  doc.line(0, halfH, 2*colW, halfH);
-  doc.setLineDashPattern([], 0);
-
-  // Legend
-  doc.setFontSize(4);
-  doc.setFont('helvetica','normal');
-  doc.setTextColor(120,120,120);
+  doc.setDrawColor(100,100,100); doc.setLineWidth(0.25);
+  doc.setLineDashPattern([2,1.5],0); doc.line(colW,0,colW,H);
+  doc.setLineDashPattern([0.8,2],0); doc.setDrawColor(80,80,80); doc.line(2*colW,0,2*colW,H);
+  doc.setLineDashPattern([],0);
+  doc.setDrawColor(180,180,180); doc.setLineWidth(0.12); doc.setLineDashPattern([1,2],0);
+  doc.line(0,halfH,2*colW,halfH); doc.setLineDashPattern([],0);
+  doc.setFontSize(4); doc.setFont('helvetica','normal'); doc.setTextColor(120,120,120);
   doc.text('--- fold at 110mm', 2*colW+2, halfH-4);
   doc.text('... cut at 220mm', 2*colW+2, halfH);
   doc.text(sideLabel, 2*colW+2, halfH+4);
 }
 
 function drawPassportSide(doc, puzzles, startIdx, sideLabel) {
-  const W = 297, H = 210;
-  const pw = 134, ph = 98;
-  const totalW = pw*2, totalH = ph*2;
-  const startX = (W - totalW) / 2;
-  const startY = (H - totalH) / 2;
-  const labelH = 8;
-  const gridSize = Math.min(pw - 8, ph - 8 - labelH);
-  const vOff = (ph - gridSize - labelH) / 2;
-  const hOff = (pw - gridSize) / 2;
-
-  const panels = [
-    [0, 0, startIdx],
-    [1, 0, startIdx+1],
-    [0, 1, startIdx+2],
-    [1, 1, startIdx+3],
-  ];
-  for (const [col, row, num] of panels) {
-    const ox = startX + col*pw + hOff;
-    const oy = startY + row*ph + vOff;
-    drawSudoku(doc, ox, oy, gridSize, puzzles[num-1], num, 2.5);
+  const W=297, H=210, pw=134, ph=98;
+  const totalW=pw*2, totalH=ph*2;
+  const startX=(W-totalW)/2, startY=(H-totalH)/2;
+  const labelH=8, gridSize=Math.min(pw-8,ph-8-labelH);
+  const vOff=(ph-gridSize-labelH)/2, hOff=(pw-gridSize)/2;
+  for (const [col,row,num] of [[0,0,startIdx],[1,0,startIdx+1],[0,1,startIdx+2],[1,1,startIdx+3]]) {
+    drawSudoku(doc, startX+col*pw+hOff, startY+row*ph+vOff, gridSize, puzzles[num-1], num, 2.5);
   }
-
-  // Borders
-  doc.setDrawColor(160,160,160);
-  doc.setLineWidth(0.15);
-  doc.setLineDashPattern([], 0);
-  for (let col = 0; col < 2; col++)
-    for (let row = 0; row < 2; row++)
-      doc.rect(startX + col*pw, startY + row*ph, pw, ph);
-
-  // Cut lines
-  doc.setDrawColor(80,80,80);
-  doc.setLineWidth(0.25);
-  doc.setLineDashPattern([0.8,2], 0);
+  doc.setDrawColor(160,160,160); doc.setLineWidth(0.15); doc.setLineDashPattern([],0);
+  for (let col=0;col<2;col++) for (let row=0;row<2;row++) doc.rect(startX+col*pw, startY+row*ph, pw, ph);
+  doc.setDrawColor(80,80,80); doc.setLineWidth(0.25); doc.setLineDashPattern([0.8,2],0);
   doc.line(startX+pw, startY-4, startX+pw, startY+totalH+4);
   doc.line(startX-4, startY+ph, startX+totalW+4, startY+ph);
-  doc.setLineDashPattern([], 0);
-
-  // Legend
-  doc.setFontSize(4);
-  doc.setFont('helvetica','normal');
-  doc.setTextColor(120,120,120);
-  doc.text('... cut horizontally and vertically at centre | ' + sideLabel, W/2, startY - 4, {align:'center'});
+  doc.setLineDashPattern([],0);
+  doc.setFontSize(4); doc.setFont('helvetica','normal'); doc.setTextColor(120,120,120);
+  doc.text('... cut horizontally and vertically at centre | '+sideLabel, W/2, startY-4, {align:'center'});
 }
 
-// ── Generate ──────────────────────────────────────────────────────────────────
+// ── Build PDFs ────────────────────────────────────────────────────────────────
+function buildDoc(puzzles, size, pages, sideFilter) {
+  // sideFilter: 'all' | 'side1' | 'side2'
+  // For side2 manual duplex: pages must be in REVERSE order so when
+  // the stack is flipped, page N back aligns with page N front.
+  const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+  let first = true;
+
+  const pageOrder = sideFilter === 'side2'
+    ? Array.from({length:pages}, (_,i) => pages-1-i)  // reversed
+    : Array.from({length:pages}, (_,i) => i);
+
+  for (const p of pageOrder) {
+    const base = p * 8;
+    if (sideFilter === 'all' || sideFilter === 'side1') {
+      if (!first) doc.addPage(); first = false;
+      const label = `Page ${p+1} of ${pages} - Side 1`;
+      size === 'regular'
+        ? drawRegularSide(doc, puzzles, base+1, label)
+        : drawPassportSide(doc, puzzles, base+1, label);
+    }
+    if (sideFilter === 'all' || sideFilter === 'side2') {
+      if (!first) doc.addPage(); first = false;
+      const label = `Page ${p+1} of ${pages} - Side 2`;
+      size === 'regular'
+        ? drawRegularSide(doc, puzzles, base+5, label)
+        : drawPassportSide(doc, puzzles, base+5, label);
+    }
+  }
+  return doc;
+}
+
+// ── Generate button ───────────────────────────────────────────────────────────
 generateBtn.addEventListener('click', async () => {
   const size = getSize();
-  const pages = parseInt(document.getElementById("countDisplay").value) || 1;
+  const pages = parseInt(countInput.value) || 1;
   const total = pages * 8;
 
   generateBtn.disabled = true;
@@ -539,50 +423,82 @@ generateBtn.addEventListener('click', async () => {
   await new Promise(r => setTimeout(r, 50));
 
   const puzzles = [];
-  for (let i = 0; i < total; i++) {
-    setProgress(i / total * 60, `Generating puzzle ${i+1} of ${total}...`);
+  for (let i=0; i<total; i++) {
+    setProgress(i/total*60, `Generating puzzle ${i+1} of ${total}...`);
     await new Promise(r => setTimeout(r, 0));
     puzzles.push(generateSudoku());
   }
 
-  setProgress(70, 'Building PDF...');
+  setProgress(80, 'Building PDF...');
   await new Promise(r => setTimeout(r, 50));
 
-  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-
-  for (let p = 0; p < pages; p++) {
-    const base = p * 8;
-    const label1 = `Page ${p+1} of ${pages} - Side 1, print first`;
-    const label2 = `Page ${p+1} of ${pages} - Side 2, flip on short edge`;
-
-    if (p > 0) doc.addPage();
-
-    if (size === 'regular') {
-      drawRegularSide(doc, puzzles, base+1, label1);
-      doc.addPage();
-      drawRegularSide(doc, puzzles, base+5, label2);
-    } else {
-      drawPassportSide(doc, puzzles, base+1, label1);
-      doc.addPage();
-      drawPassportSide(doc, puzzles, base+5, label2);
-    }
-
-    setProgress(70 + (p+1)/pages*28, `Building page ${p+1}...`);
-    await new Promise(r => setTimeout(r, 0));
+  if (duplexSupported) {
+    // Single PDF, all pages interleaved
+    const doc = buildDoc(puzzles, size, pages, 'all');
+    setProgress(100, 'Done! Downloading...');
+    await new Promise(r => setTimeout(r, 300));
+    doc.save(`tn-sudoku-${size}-${pages}pages.pdf`);
+    generateBtn.disabled = false;
+    progress.classList.remove('visible');
+    progressFill.style.width = '0%';
+  } else {
+    // Store puzzles and show modal
+    generatedPuzzles = puzzles;
+    generatedSize = size;
+    generatedPages = pages;
+    setProgress(100, 'Ready!');
+    await new Promise(r => setTimeout(r, 300));
+    generateBtn.disabled = false;
+    progress.classList.remove('visible');
+    progressFill.style.width = '0%';
+    showManualModal(size, pages);
   }
-
-  setProgress(100, 'Done! Downloading...');
-  await new Promise(r => setTimeout(r, 300));
-
-  doc.save(`tn-sudoku-${size}-${pages}pages.pdf`);
-
-  generateBtn.disabled = false;
-  progress.classList.remove('visible');
-  progressFill.style.width = '0%';
 });
 
+// ── Manual duplex modal ───────────────────────────────────────────────────────
+function showManualModal(size, pages) {
+  document.getElementById('modalSteps').innerHTML = `
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">Click <strong>Download Side 1</strong> and print it on your printer. Make sure to print in <strong>landscape</strong> orientation.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">Take the printed pages out of the tray. <strong>Flip the stack face-down</strong> and reinsert it into the paper feed — do not rotate it.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">Click <strong>Download Side 2</strong> and print it. The pages are already in reverse order so they line up correctly when flipped.</div>
+    </div>
+  `;
+
+  modalBtn1.textContent = 'Download Side 1';
+  modalBtn1.onclick = () => {
+    const doc = buildDoc(generatedPuzzles, generatedSize, generatedPages, 'side1');
+    doc.save(`tn-sudoku-${generatedSize}-side1.pdf`);
+    // After download, update modal to step 2/3
+    modalBtn1.textContent = 'Download Side 2';
+    modalBtn1.onclick = () => {
+      const doc2 = buildDoc(generatedPuzzles, generatedSize, generatedPages, 'side2');
+      doc2.save(`tn-sudoku-${generatedSize}-side2.pdf`);
+      modalBtn1.textContent = '✓ All done!';
+      modalBtn1.disabled = true;
+      // Mark steps done
+      document.querySelectorAll('.step-num').forEach(el => { el.classList.add('done'); el.textContent = '✓'; });
+    };
+    // Mark step 1 done
+    const steps = document.querySelectorAll('.step-num');
+    steps[0].classList.add('done'); steps[0].textContent = '✓';
+  };
+
+  modalOverlay.classList.add('visible');
+}
+
+modalClose.addEventListener('click', () => modalOverlay.classList.remove('visible'));
+modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) modalOverlay.classList.remove('visible'); });
+
 function setProgress(pct, text) {
-  progressFill.style.width = pct + '%';
+  progressFill.style.width = pct+'%';
   progressText.textContent = text;
 }
 
