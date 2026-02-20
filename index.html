@@ -239,6 +239,38 @@
   </div>
 
   <div class="field">
+    <label>Puzzle Numbering</label>
+    <div class="options" style="grid-template-columns:1fr 1fr 1fr; padding-left:28px;">
+      <label class="option">
+        <input type="radio" name="numbering" value="sudoku" checked>
+        <span class="option-label"><strong>Sudoku 1</strong>default<br>style</span>
+      </label>
+      <label class="option">
+        <input type="radio" name="numbering" value="no">
+        <span class="option-label"><strong>No. 1</strong>classic<br>style</span>
+      </label>
+      <label class="option">
+        <input type="radio" name="numbering" value="roman">
+        <span class="option-label"><strong>I, II, III</strong>roman<br>numerals</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Date Field</label>
+    <div class="options" style="padding-left:28px;">
+      <label class="option">
+        <input type="radio" name="datefield" value="none" checked>
+        <span class="option-label"><strong>None</strong>no date<br>field</span>
+      </label>
+      <label class="option">
+        <input type="radio" name="datefield" value="date">
+        <span class="option-label"><strong>Date</strong>blank line<br>to fill in</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="field">
     <label>Number of Pages</label>
     <div class="count-row">
       <button class="count-btn" id="decBtn">−</button>
@@ -361,6 +393,21 @@ function getCover() { return document.querySelector('input[name="cover"]:checked
 function getCoverTitle() { return getCover() === 'cover' ? getTitle() : null; }
 function getFont() { return document.querySelector('input[name="font"]:checked')?.value || 'helvetica'; }
 function getNotes() { return document.querySelector('input[name="notes"]:checked')?.value || 'none'; }
+function getNumbering() { return document.querySelector('input[name="numbering"]:checked')?.value || 'sudoku'; }
+function getDateField() { return document.querySelector('input[name="datefield"]:checked')?.value || 'none'; }
+function toRoman(n) {
+  const vals = [1000,900,500,400,100,90,50,40,10,9,5,4,1];
+  const syms = ['M','CM','D','CD','C','XC','L','XL','X','IX','V','IV','I'];
+  let result = '';
+  for (let i = 0; i < vals.length; i++) { while (n >= vals[i]) { result += syms[i]; n -= vals[i]; } }
+  return result;
+}
+function puzzleLabel(n) {
+  const style = getNumbering();
+  if (style === 'no') return `No. ${n}`;
+  if (style === 'roman') return toRoman(n);
+  return `Sudoku ${n}`;
+}
 
 function updateHint() {
   pageCount = parseInt(countInput.value) || 1;
@@ -409,8 +456,9 @@ function drawSudoku(doc, ox, oy, size, puzzle, number, labelFs=3) {
   const cell = size/9;
   doc.setFontSize(labelFs*2.5); doc.setFont(getFont(),'bold'); doc.setTextColor(0,0,0);
   doc.setFillColor(255,255,255);
-  doc.rect(ox, oy-labelFs*1.2, doc.getTextWidth(`Sudoku ${number}`)+2, labelFs*1.5, 'F');
-  doc.text(`Sudoku ${number}`, ox+1, oy-labelFs*0.2);
+  const pLabel = puzzleLabel(number);
+  doc.rect(ox, oy-labelFs*1.2, doc.getTextWidth(pLabel)+2, labelFs*1.5, 'F');
+  doc.text(pLabel, ox+1, oy-labelFs*0.2);
   for (let row=0; row<9; row++) for (let col=0; col<9; col++) {
     const val = puzzle[row][col];
     if (val !== 0) {
@@ -508,14 +556,26 @@ function drawCoverPage(doc, title) {
 }
 
 function drawNotes(doc, ox, oy, width) {
-  // oy = top of notes area, draws 3 ruled lines with a small "Notes" label
   const lineGap = 4.5;
   const labelFs = 2.8;
+
+  // Date field on the right if enabled
+  if (getDateField() === 'date') {
+    doc.setFont(getFont(), 'normal');
+    doc.setFontSize(labelFs * 2.2);
+    doc.setTextColor(160, 160, 160);
+    const dateLabel = 'Date: ___________';
+    const dw = doc.getTextWidth(dateLabel);
+    doc.text(dateLabel, ox + width - dw, oy + labelFs);
+  }
+
+  // Notes label on the left
   doc.setFont(getFont(), 'normal');
   doc.setFontSize(labelFs * 2.2);
   doc.setTextColor(160, 160, 160);
   doc.text('Notes', ox, oy + labelFs);
 
+  // Ruled lines
   doc.setDrawColor(180, 180, 180);
   doc.setLineWidth(0.15);
   for (let i = 0; i < 3; i++) {
