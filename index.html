@@ -207,6 +207,38 @@
   </div>
 
   <div class="field">
+    <label>Font Style</label>
+    <div class="options" style="grid-template-columns:1fr 1fr 1fr; padding-left:28px;">
+      <label class="option">
+        <input type="radio" name="font" value="helvetica" checked>
+        <span class="option-label" style="font-family:sans-serif;"><strong>Classic</strong>clean &amp;<br>minimal</span>
+      </label>
+      <label class="option">
+        <input type="radio" name="font" value="times">
+        <span class="option-label" style="font-family:serif;"><strong style="font-family:serif;">Serif</strong>traditional<br>newspaper</span>
+      </label>
+      <label class="option">
+        <input type="radio" name="font" value="courier">
+        <span class="option-label" style="font-family:monospace;"><strong style="font-family:monospace;">Mono</strong>typewriter<br>style</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Notes Section</label>
+    <div class="options" style="padding-left:28px;">
+      <label class="option">
+        <input type="radio" name="notes" value="none" checked>
+        <span class="option-label"><strong>None</strong>no notes<br>section</span>
+      </label>
+      <label class="option">
+        <input type="radio" name="notes" value="notes">
+        <span class="option-label"><strong>Notes</strong>lined space<br>below puzzle</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="field">
     <label>Number of Pages</label>
     <div class="count-row">
       <button class="count-btn" id="decBtn">−</button>
@@ -327,6 +359,8 @@ function getDifficulty() { return document.querySelector('input[name="difficulty
 function getTitle() { return document.getElementById('customTitle')?.value.trim() || ''; }
 function getCover() { return document.querySelector('input[name="cover"]:checked')?.value || 'none'; }
 function getCoverTitle() { return getCover() === 'cover' ? getTitle() : null; }
+function getFont() { return document.querySelector('input[name="font"]:checked')?.value || 'helvetica'; }
+function getNotes() { return document.querySelector('input[name="notes"]:checked')?.value || 'none'; }
 
 function updateHint() {
   pageCount = parseInt(countInput.value) || 1;
@@ -373,7 +407,7 @@ function generateSudoku(difficulty) {
 // ── PDF drawing ───────────────────────────────────────────────────────────────
 function drawSudoku(doc, ox, oy, size, puzzle, number, labelFs=3) {
   const cell = size/9;
-  doc.setFontSize(labelFs*2.5); doc.setFont('helvetica','bold'); doc.setTextColor(0,0,0);
+  doc.setFontSize(labelFs*2.5); doc.setFont(getFont(),'bold'); doc.setTextColor(0,0,0);
   doc.setFillColor(255,255,255);
   doc.rect(ox, oy-labelFs*1.2, doc.getTextWidth(`Sudoku ${number}`)+2, labelFs*1.5, 'F');
   doc.text(`Sudoku ${number}`, ox+1, oy-labelFs*0.2);
@@ -381,7 +415,7 @@ function drawSudoku(doc, ox, oy, size, puzzle, number, labelFs=3) {
     const val = puzzle[row][col];
     if (val !== 0) {
       const x=ox+col*cell, y=oy+row*cell;
-      doc.setFontSize(cell*1.8); doc.setFont('helvetica','normal'); doc.setTextColor(0,0,0);
+      doc.setFontSize(cell*1.8); doc.setFont(getFont(),'normal'); doc.setTextColor(0,0,0);
       const tw=doc.getTextWidth(String(val));
       doc.text(String(val), x+(cell-tw)/2, y+cell*0.72);
     }
@@ -398,7 +432,7 @@ function drawSudoku(doc, ox, oy, size, puzzle, number, labelFs=3) {
 function drawPageTitle(doc, title, W, H) {
   if (!title) return;
   doc.setFontSize(7);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(getFont(), 'bold');
   doc.setTextColor(80, 80, 80);
   doc.text(title, W / 2, H - 4, { align: 'center' });
 }
@@ -440,7 +474,7 @@ function drawCoverPage(doc, title) {
     const centerY = fy + fh/2;
 
     // Main title
-    doc.setFont('helvetica', 'bold');
+    doc.setFont(getFont(), 'bold');
     doc.setTextColor(30, 30, 30);
     doc.setFontSize(11);
     doc.text(title, centerX, centerY - 4, { align: 'center', maxWidth: fw - 16 });
@@ -452,7 +486,7 @@ function drawCoverPage(doc, title) {
     doc.line(centerX - lineW/2, centerY + 1, centerX + lineW/2, centerY + 1);
 
     // "Sudoku Puzzles" subtitle
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(getFont(), 'normal');
     doc.setFontSize(6);
     doc.setTextColor(100, 100, 100);
     doc.text('SUDOKU PUZZLES', centerX, centerY + 7, { align: 'center' });
@@ -466,18 +500,38 @@ function drawCoverPage(doc, title) {
       doc.line(fx + 12, ly, fx + fw - 12, ly);
     }
     // Tiny label above lines
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(getFont(), 'normal');
     doc.setFontSize(5);
     doc.setTextColor(160, 160, 160);
     doc.text('MY SUDOKU BOOK', fx + fw/2, centerY - 14, { align: 'center' });
   }
 }
 
+function drawNotes(doc, ox, oy, width) {
+  // oy = top of notes area, draws 3 ruled lines with a small "Notes" label
+  const lineGap = 4.5;
+  const labelFs = 2.8;
+  doc.setFont(getFont(), 'normal');
+  doc.setFontSize(labelFs * 2.2);
+  doc.setTextColor(160, 160, 160);
+  doc.text('Notes', ox, oy + labelFs);
+
+  doc.setDrawColor(180, 180, 180);
+  doc.setLineWidth(0.15);
+  for (let i = 0; i < 3; i++) {
+    const ly = oy + labelFs + 2 + i * lineGap;
+    doc.line(ox, ly, ox + width, ly);
+  }
+}
+
 function drawRegularSide(doc, puzzles, startIdx, sideLabel) {
   const W=297, H=210, colW=110, margin=5, halfH=H/2;
-  const sudSize=Math.min(colW-2*margin, halfH-14), vGap=(halfH-sudSize)/2;
+  const notesH = getNotes() === 'notes' ? 18 : 0;
+  const sudSize=Math.min(colW-2*margin, halfH-14-notesH), vGap=(halfH-sudSize-notesH)/2;
   for (const [col,row,num] of [[0,0,startIdx],[0,1,startIdx+1],[1,0,startIdx+2],[1,1,startIdx+3]]) {
-    drawSudoku(doc, col*colW+margin, row*halfH+vGap, sudSize, puzzles[num-1], num, 3);
+    const ox = col*colW+margin, oy = row*halfH+vGap;
+    drawSudoku(doc, ox, oy, sudSize, puzzles[num-1], num, 3);
+    if (getNotes() === 'notes') drawNotes(doc, ox, oy + sudSize + 3, sudSize);
   }
   doc.setDrawColor(100,100,100); doc.setLineWidth(0.25);
   doc.setLineDashPattern([2,1.5],0); doc.line(colW,0,colW,H);
@@ -485,7 +539,7 @@ function drawRegularSide(doc, puzzles, startIdx, sideLabel) {
   doc.setLineDashPattern([],0);
   doc.setDrawColor(180,180,180); doc.setLineWidth(0.12); doc.setLineDashPattern([1,2],0);
   doc.line(0,halfH,2*colW,halfH); doc.setLineDashPattern([],0);
-  doc.setFontSize(4); doc.setFont('helvetica','normal'); doc.setTextColor(120,120,120);
+  doc.setFontSize(4); doc.setFont(getFont(),'normal'); doc.setTextColor(120,120,120);
   doc.text('--- fold at 110mm', 2*colW+2, halfH-4);
   doc.text('... cut at 220mm', 2*colW+2, halfH);
   doc.text(sideLabel, 2*colW+2, halfH+4);
@@ -496,10 +550,13 @@ function drawPassportSide(doc, puzzles, startIdx, sideLabel) {
   const W=297, H=210, pw=134, ph=98;
   const totalW=pw*2, totalH=ph*2;
   const startX=(W-totalW)/2, startY=(H-totalH)/2;
-  const labelH=8, gridSize=Math.min(pw-8,ph-8-labelH);
-  const vOff=(ph-gridSize-labelH)/2, hOff=(pw-gridSize)/2;
+  const passNotesH = getNotes() === 'notes' ? 14 : 0;
+  const labelH=8, gridSize=Math.min(pw-8,ph-8-labelH-passNotesH);
+  const vOff=(ph-gridSize-labelH-passNotesH)/2, hOff=(pw-gridSize)/2;
   for (const [col,row,num] of [[0,0,startIdx],[1,0,startIdx+1],[0,1,startIdx+2],[1,1,startIdx+3]]) {
-    drawSudoku(doc, startX+col*pw+hOff, startY+row*ph+vOff, gridSize, puzzles[num-1], num, 2.5);
+    const ox = startX+col*pw+hOff, oy = startY+row*ph+vOff;
+    drawSudoku(doc, ox, oy, gridSize, puzzles[num-1], num, 2.5);
+    if (getNotes() === 'notes') drawNotes(doc, ox, oy + gridSize + 2, gridSize);
   }
   doc.setDrawColor(160,160,160); doc.setLineWidth(0.15); doc.setLineDashPattern([],0);
   for (let col=0;col<2;col++) for (let row=0;row<2;row++) doc.rect(startX+col*pw, startY+row*ph, pw, ph);
@@ -507,7 +564,7 @@ function drawPassportSide(doc, puzzles, startIdx, sideLabel) {
   doc.line(startX+pw, startY-4, startX+pw, startY+totalH+4);
   doc.line(startX-4, startY+ph, startX+totalW+4, startY+ph);
   doc.setLineDashPattern([],0);
-  doc.setFontSize(4); doc.setFont('helvetica','normal'); doc.setTextColor(120,120,120);
+  doc.setFontSize(4); doc.setFont(getFont(),'normal'); doc.setTextColor(120,120,120);
   doc.text('... cut horizontally and vertically at centre | '+sideLabel, W/2, startY-4, {align:'center'});
   drawPageTitle(doc, getTitle(), W, H);
 }
