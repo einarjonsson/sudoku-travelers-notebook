@@ -180,6 +180,33 @@
   </div>
 
   <div class="field">
+    <label>Custom Title <span style="opacity:0.5;font-size:0.6rem;text-transform:none;letter-spacing:0">(optional)</span></label>
+    <div style="padding-left:28px;">
+      <input type="text" id="customTitle" placeholder="e.g. Anna's Sudoku Book"
+        style="width:100%;font-family:'DM Mono',monospace;font-size:0.8rem;color:var(--ink);
+               border:1.5px solid var(--rule);border-radius:2px;background:var(--cream);
+               padding:10px 12px;outline:none;transition:border-color 0.15s;"
+        onfocus="this.style.borderColor='var(--accent)'"
+        onblur="this.style.borderColor='var(--rule)'"
+      >
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Cover Page</label>
+    <div class="options" style="padding-left:28px;">
+      <label class="option">
+        <input type="radio" name="cover" value="none" checked>
+        <span class="option-label"><strong>None</strong>no cover<br>page</span>
+      </label>
+      <label class="option">
+        <input type="radio" name="cover" value="cover">
+        <span class="option-label"><strong>Cover</strong>elegant frame,<br>title or blank</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="field">
     <label>Number of Pages</label>
     <div class="count-row">
       <button class="count-btn" id="decBtn">−</button>
@@ -230,6 +257,7 @@ let generatedPuzzles = null;
 let generatedSize = null;
 let generatedPages = null;
 let generatedDifficulty = null;
+let generatedTitle = null;
 
 const countInput = document.getElementById('countDisplay');
 const countHint = document.getElementById('countHint');
@@ -296,6 +324,9 @@ detectDuplex();
 // ── UI helpers ────────────────────────────────────────────────────────────────
 function getSize() { return document.querySelector('input[name="size"]:checked').value; }
 function getDifficulty() { return document.querySelector('input[name="difficulty"]:checked')?.value || 'medium'; }
+function getTitle() { return document.getElementById('customTitle')?.value.trim() || ''; }
+function getCover() { return document.querySelector('input[name="cover"]:checked')?.value || 'none'; }
+function getCoverTitle() { return getCover() === 'cover' ? getTitle() : null; }
 
 function updateHint() {
   pageCount = parseInt(countInput.value) || 1;
@@ -363,6 +394,85 @@ function drawSudoku(doc, ox, oy, size, puzzle, number, labelFs=3) {
   }
 }
 
+
+function drawPageTitle(doc, title, W, H) {
+  if (!title) return;
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(80, 80, 80);
+  doc.text(title, W / 2, H - 4, { align: 'center' });
+}
+
+function drawCoverPage(doc, title) {
+  const W = 297, H = 210;
+  const colW = 110;
+
+  // Left panel: blank (nothing drawn)
+
+  // Right panel: frame with title
+  const margin = 8;
+  const fx = colW + margin, fy = margin;
+  const fw = colW - margin*2, fh = H - margin*2;
+
+  // Outer frame
+  doc.setDrawColor(80, 80, 80);
+  doc.setLineWidth(0.8);
+  doc.rect(fx, fy, fw, fh);
+
+  // Inner frame (inset by 3mm)
+  doc.setLineWidth(0.25);
+  doc.rect(fx + 3, fy + 3, fw - 6, fh - 6);
+
+  // Corner marks
+  const cs = 5; // corner mark size
+  doc.setLineWidth(0.5);
+  for (const [ox, oy, sx, sy] of [
+    [fx+3, fy+3, 1, 1], [fx+fw-3, fy+3, -1, 1],
+    [fx+3, fy+fh-3, 1, -1], [fx+fw-3, fy+fh-3, -1, -1]
+  ]) {
+    doc.line(ox, oy, ox + sx*cs, oy);
+    doc.line(ox, oy, ox, oy + sy*cs);
+  }
+
+  if (title) {
+    // Parse Vol. number from title if present, else just show title
+    const centerX = fx + fw/2;
+    const centerY = fy + fh/2;
+
+    // Main title
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 30, 30);
+    doc.setFontSize(11);
+    doc.text(title, centerX, centerY - 4, { align: 'center', maxWidth: fw - 16 });
+
+    // Decorative line under title
+    const lineW = Math.min(doc.getTextWidth(title) + 8, fw - 20);
+    doc.setLineWidth(0.3);
+    doc.setDrawColor(120, 120, 120);
+    doc.line(centerX - lineW/2, centerY + 1, centerX + lineW/2, centerY + 1);
+
+    // "Sudoku Puzzles" subtitle
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6);
+    doc.setTextColor(100, 100, 100);
+    doc.text('SUDOKU PUZZLES', centerX, centerY + 7, { align: 'center' });
+  } else {
+    // Blank — show subtle writing lines
+    const centerY = fy + fh/2;
+    doc.setDrawColor(180, 180, 180);
+    doc.setLineWidth(0.2);
+    for (let i = -1; i <= 1; i++) {
+      const ly = centerY + i * 8;
+      doc.line(fx + 12, ly, fx + fw - 12, ly);
+    }
+    // Tiny label above lines
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(5);
+    doc.setTextColor(160, 160, 160);
+    doc.text('MY SUDOKU BOOK', fx + fw/2, centerY - 14, { align: 'center' });
+  }
+}
+
 function drawRegularSide(doc, puzzles, startIdx, sideLabel) {
   const W=297, H=210, colW=110, margin=5, halfH=H/2;
   const sudSize=Math.min(colW-2*margin, halfH-14), vGap=(halfH-sudSize)/2;
@@ -379,6 +489,7 @@ function drawRegularSide(doc, puzzles, startIdx, sideLabel) {
   doc.text('--- fold at 110mm', 2*colW+2, halfH-4);
   doc.text('... cut at 220mm', 2*colW+2, halfH);
   doc.text(sideLabel, 2*colW+2, halfH+4);
+  drawPageTitle(doc, getTitle(), W, H);
 }
 
 function drawPassportSide(doc, puzzles, startIdx, sideLabel) {
@@ -398,6 +509,7 @@ function drawPassportSide(doc, puzzles, startIdx, sideLabel) {
   doc.setLineDashPattern([],0);
   doc.setFontSize(4); doc.setFont('helvetica','normal'); doc.setTextColor(120,120,120);
   doc.text('... cut horizontally and vertically at centre | '+sideLabel, W/2, startY-4, {align:'center'});
+  drawPageTitle(doc, getTitle(), W, H);
 }
 
 // ── Build PDFs ────────────────────────────────────────────────────────────────
@@ -407,6 +519,13 @@ function buildDoc(puzzles, size, pages, sideFilter) {
   // the stack is flipped, page N back aligns with page N front.
   const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
   let first = true;
+
+  // Dedicated cover sheet: blank left panel, framed right panel
+  // Printed as first page of side1 so when folded = outside front cover
+  if (getCover() === 'cover' && sideFilter !== 'side2') {
+    drawCoverPage(doc, getTitle());
+    first = false;
+  }
 
   const pageOrder = sideFilter === 'side2'
     ? Array.from({length:pages}, (_,i) => pages-1-i)  // reversed
@@ -458,7 +577,9 @@ generateBtn.addEventListener('click', async () => {
     const doc = buildDoc(puzzles, size, pages, 'all');
     setProgress(100, 'Done! Downloading...');
     await new Promise(r => setTimeout(r, 300));
-    doc.save(`tn-sudoku-${size}-${getDifficulty()}-${pages}pages.pdf`);
+    const titleSlug = getTitle().replace(/[^a-z0-9]/gi,'-').toLowerCase().replace(/-+/g,'-').replace(/^-|-$/g,'');
+    const fname = titleSlug ? `${titleSlug}-sudoku-${size}-${getDifficulty()}-${pages}pages.pdf` : `tn-sudoku-${size}-${getDifficulty()}-${pages}pages.pdf`;
+    doc.save(fname);
     generateBtn.disabled = false;
     progress.classList.remove('visible');
     progressFill.style.width = '0%';
@@ -468,6 +589,7 @@ generateBtn.addEventListener('click', async () => {
     generatedSize = size;
     generatedPages = pages;
     generatedDifficulty = getDifficulty();
+    generatedTitle = getTitle();
     setProgress(100, 'Ready!');
     await new Promise(r => setTimeout(r, 300));
     generateBtn.disabled = false;
