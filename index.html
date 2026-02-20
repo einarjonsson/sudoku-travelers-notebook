@@ -162,6 +162,24 @@
   </div>
 
   <div class="field">
+    <label>Difficulty</label>
+    <div class="options" style="grid-template-columns:1fr 1fr 1fr;">
+      <label class="option">
+        <input type="radio" name="difficulty" value="easy">
+        <span class="option-label"><strong>Easy</strong>more given<br>numbers</span>
+      </label>
+      <label class="option">
+        <input type="radio" name="difficulty" value="medium" checked>
+        <span class="option-label"><strong>Medium</strong>balanced<br>challenge</span>
+      </label>
+      <label class="option">
+        <input type="radio" name="difficulty" value="hard">
+        <span class="option-label"><strong>Hard</strong>fewer given<br>numbers</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="field">
     <label>Number of Pages</label>
     <div class="count-row">
       <button class="count-btn" id="decBtn">−</button>
@@ -211,6 +229,7 @@ let duplexSupported = false;
 let generatedPuzzles = null;
 let generatedSize = null;
 let generatedPages = null;
+let generatedDifficulty = null;
 
 const countInput = document.getElementById('countDisplay');
 const countHint = document.getElementById('countHint');
@@ -276,6 +295,7 @@ detectDuplex();
 
 // ── UI helpers ────────────────────────────────────────────────────────────────
 function getSize() { return document.querySelector('input[name="size"]:checked').value; }
+function getDifficulty() { return document.querySelector('input[name="difficulty"]:checked')?.value || 'medium'; }
 
 function updateHint() {
   pageCount = parseInt(countInput.value) || 1;
@@ -310,11 +330,12 @@ function solve(board) {
   }
   return true;
 }
-function generateSudoku() {
+function generateSudoku(difficulty) {
+  const removals = difficulty === "easy" ? 36 : difficulty === "hard" ? 54 : 45;
   const board = Array.from({length:9}, ()=>Array(9).fill(0));
   solve(board);
   const cells = []; for (let r=0;r<9;r++) for (let c=0;c<9;c++) cells.push([r,c]);
-  shuffle(cells); for (const [r,c] of cells.slice(0,45)) board[r][c]=0;
+  shuffle(cells); for (const [r,c] of cells.slice(0, removals)) board[r][c]=0;
   return board;
 }
 
@@ -426,7 +447,7 @@ generateBtn.addEventListener('click', async () => {
   for (let i=0; i<total; i++) {
     setProgress(i/total*60, `Generating puzzle ${i+1} of ${total}...`);
     await new Promise(r => setTimeout(r, 0));
-    puzzles.push(generateSudoku());
+    puzzles.push(generateSudoku(getDifficulty()));
   }
 
   setProgress(80, 'Building PDF...');
@@ -437,7 +458,7 @@ generateBtn.addEventListener('click', async () => {
     const doc = buildDoc(puzzles, size, pages, 'all');
     setProgress(100, 'Done! Downloading...');
     await new Promise(r => setTimeout(r, 300));
-    doc.save(`tn-sudoku-${size}-${pages}pages.pdf`);
+    doc.save(`tn-sudoku-${size}-${getDifficulty()}-${pages}pages.pdf`);
     generateBtn.disabled = false;
     progress.classList.remove('visible');
     progressFill.style.width = '0%';
@@ -446,6 +467,7 @@ generateBtn.addEventListener('click', async () => {
     generatedPuzzles = puzzles;
     generatedSize = size;
     generatedPages = pages;
+    generatedDifficulty = getDifficulty();
     setProgress(100, 'Ready!');
     await new Promise(r => setTimeout(r, 300));
     generateBtn.disabled = false;
@@ -475,12 +497,12 @@ function showManualModal(size, pages) {
   modalBtn1.textContent = 'Download Side 1';
   modalBtn1.onclick = () => {
     const doc = buildDoc(generatedPuzzles, generatedSize, generatedPages, 'side1');
-    doc.save(`tn-sudoku-${generatedSize}-side1.pdf`);
+    doc.save(`tn-sudoku-${generatedSize}-${generatedDifficulty}-side1.pdf`);
     // After download, update modal to step 2/3
     modalBtn1.textContent = 'Download Side 2';
     modalBtn1.onclick = () => {
       const doc2 = buildDoc(generatedPuzzles, generatedSize, generatedPages, 'side2');
-      doc2.save(`tn-sudoku-${generatedSize}-side2.pdf`);
+      doc2.save(`tn-sudoku-${generatedSize}-${generatedDifficulty}-side2.pdf`);
       modalBtn1.textContent = '✓ All done!';
       modalBtn1.disabled = true;
       // Mark steps done
