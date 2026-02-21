@@ -5,309 +5,726 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TN Sudoku Generator</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&display=swap');
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --ink: #1a1208; --paper: #f5f0e8; --cream: #ede8db;
-    --accent: #8b4513; --accent-light: #c4703a; --rule: #c8bfaa;
-    --shadow: rgba(26,18,8,0.15); --green: #3a7c52; --green-light: #edf7f1;
-    --orange: #c4703a; --orange-light: #fdf3ec;
-  }
-  body {
-    background: var(--paper); color: var(--ink);
-    font-family: 'DM Mono', monospace;
-    min-height: 100vh; display: flex; flex-direction: column;
-    align-items: center; padding: 48px 24px;
-    background-image: repeating-linear-gradient(0deg, transparent, transparent 27px, var(--rule) 27px, var(--rule) 28px);
-  }
-  header { text-align: center; margin-bottom: 48px; }
-  .logo { font-family: 'DM Serif Display', serif; font-size: clamp(2rem, 6vw, 3.5rem); line-height: 1.1; margin-bottom: 8px; }
-  .logo em { font-style: italic; color: var(--accent); }
-  .tagline { font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); opacity: 0.8; }
-  .card {
-    background: #fffdf7; border: 1.5px solid var(--rule); border-radius: 2px;
-    padding: 36px; width: 100%; max-width: 480px;
-    box-shadow: 4px 4px 0 var(--shadow); position: relative;
-  }
-  .card::before {
-    content: ''; position: absolute; left: 20px; top: 0; bottom: 0;
-    width: 1.5px; background: #e8b4a0; opacity: 0.5;
-  }
-  .field { margin-bottom: 28px; }
-  label {
-    display: block; font-size: 0.7rem; letter-spacing: 0.12em;
-    text-transform: uppercase; color: var(--accent); margin-bottom: 10px; padding-left: 28px;
-  }
-  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding-left: 28px; }
-  .option { cursor: pointer; }
-  .option input { display: none; }
-  .option-label {
-    display: block; border: 1.5px solid var(--rule); border-radius: 2px;
-    padding: 12px 14px; font-size: 0.75rem; line-height: 1.4;
-    transition: all 0.15s ease; background: var(--cream); cursor: pointer;
-  }
-  .option-label strong { display: block; font-size: 0.8rem; margin-bottom: 2px; }
-  .option input:checked + .option-label { border-color: var(--accent); background: var(--accent); color: var(--paper); }
-  .option-label:hover { border-color: var(--accent-light); }
-  .count-row { display: flex; align-items: center; gap: 12px; padding-left: 28px; }
-  .count-btn {
-    width: 36px; height: 36px; border: 1.5px solid var(--rule);
-    background: var(--cream); color: var(--ink); font-family: 'DM Mono', monospace;
-    font-size: 1.2rem; cursor: pointer; border-radius: 2px; transition: all 0.15s;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  }
-  .count-btn:hover { border-color: var(--accent); background: var(--accent); color: white; }
-  .count-hint { font-size: 0.65rem; color: var(--accent); opacity: 0.7; line-height: 1.4; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* Duplex banner */
-  .duplex-banner {
-    margin: 0 0 24px 28px; padding: 10px 14px; border-radius: 2px;
-    font-size: 0.7rem; line-height: 1.5; border: 1.5px solid;
-    display: flex; align-items: flex-start; gap: 8px;
-  }
-  .duplex-banner.supported { background: var(--green-light); border-color: var(--green); color: var(--green); }
-  .duplex-banner.manual { background: var(--orange-light); border-color: var(--orange); color: var(--orange); }
-  .duplex-banner .icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+:root {
+  --ink: #1c1510;
+  --paper: #f7f3ec;
+  --cream: #ede8dc;
+  --warm-white: #fdfaf5;
+  --accent: #8b3a1a;
+  --accent-light: #b85c34;
+  --accent-pale: #f5ece7;
+  --rule: #d4cbbf;
+  --rule-light: #e8e2d8;
+  --muted: #9a9080;
+  --green: #2d6a4f;
+  --green-pale: #eaf4ee;
+  --shadow-sm: 0 1px 3px rgba(28,21,16,0.08);
+  --shadow-md: 0 4px 16px rgba(28,21,16,0.1);
+  --shadow-lg: 0 8px 32px rgba(28,21,16,0.12);
+}
 
-  .generate-btn {
-    width: calc(100% - 28px); margin-left: 28px; padding: 16px;
-    background: var(--accent); color: var(--paper); border: none; border-radius: 2px;
-    font-family: 'DM Mono', monospace; font-size: 0.8rem; letter-spacing: 0.1em;
-    text-transform: uppercase; cursor: pointer; transition: all 0.2s;
-    box-shadow: 3px 3px 0 rgba(139,69,19,0.3); margin-top: 8px;
-  }
-  .generate-btn:hover:not(:disabled) { background: var(--accent-light); transform: translate(-1px,-1px); box-shadow: 4px 4px 0 rgba(139,69,19,0.3); }
-  .generate-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+html { font-size: 15px; }
 
-  .progress { display: none; padding-left: 28px; margin-top: 20px; }
-  .progress.visible { display: block; }
-  .progress-bar-track { height: 4px; background: var(--cream); border-radius: 2px; overflow: hidden; margin-bottom: 8px; }
-  .progress-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s ease; width: 0%; }
-  .progress-text { font-size: 0.65rem; color: var(--accent); letter-spacing: 0.08em; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'DM Mono', monospace;
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  grid-template-columns: 1fr;
+}
 
-  /* Modal */
-  .modal-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(26,18,8,0.55); z-index: 100;
-    align-items: center; justify-content: center; padding: 24px;
-  }
-  .modal-overlay.visible { display: flex; }
-  .modal {
-    background: #fffdf7; border: 1.5px solid var(--rule); border-radius: 2px;
-    padding: 36px; max-width: 440px; width: 100%;
-    box-shadow: 6px 6px 0 var(--shadow); position: relative;
-  }
-  .modal::before {
-    content: ''; position: absolute; left: 18px; top: 0; bottom: 0;
-    width: 1.5px; background: #e8b4a0; opacity: 0.5;
-  }
-  .modal-title {
-    font-family: 'DM Serif Display', serif; font-size: 1.4rem;
-    margin-bottom: 6px; padding-left: 28px;
-  }
-  .modal-subtitle { font-size: 0.65rem; color: var(--accent); opacity: 0.7; margin-bottom: 24px; padding-left: 28px; letter-spacing: 0.08em; }
-  .steps { padding-left: 28px; }
-  .step {
-    display: flex; gap: 12px; margin-bottom: 16px; align-items: flex-start;
-  }
-  .step-num {
-    width: 24px; height: 24px; border-radius: 50%;
-    background: var(--accent); color: white; font-size: 0.7rem;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    margin-top: 1px;
-  }
-  .step-num.done { background: var(--green); }
-  .step-text { font-size: 0.75rem; line-height: 1.5; color: var(--ink); }
-  .step-text strong { color: var(--accent); }
-  .modal-btn {
-    margin-left: 28px; margin-top: 24px; padding: 13px 24px;
-    background: var(--accent); color: var(--paper); border: none; border-radius: 2px;
-    font-family: 'DM Mono', monospace; font-size: 0.75rem; letter-spacing: 0.1em;
-    text-transform: uppercase; cursor: pointer; transition: all 0.15s;
-    box-shadow: 3px 3px 0 rgba(139,69,19,0.3);
-  }
-  .modal-btn:hover { background: var(--accent-light); }
-  .modal-btn.secondary {
-    background: transparent; color: var(--accent); box-shadow: none;
-    border: 1.5px solid var(--rule); margin-left: 8px;
-  }
-  .modal-btn.secondary:hover { border-color: var(--accent); }
+/* ── Header ── */
+header {
+  padding: 28px 48px;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--warm-white);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: var(--shadow-sm);
+}
 
-  footer { margin-top: 48px; font-size: 0.65rem; color: var(--accent); opacity: 0.6; text-align: center; letter-spacing: 0.08em; }
-  input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-  input[type=number] { -moz-appearance: textfield; }
+.logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+.logo em { font-style: italic; color: var(--accent); }
+
+.header-tag {
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--rule);
+  padding: 4px 10px;
+  border-radius: 2px;
+}
+
+/* ── Main layout ── */
+main {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  min-height: calc(100vh - 73px);
+}
+
+/* ── Left panel: settings ── */
+.settings-panel {
+  border-right: 1px solid var(--rule);
+  background: var(--warm-white);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-inner {
+  padding: 32px 28px;
+  flex: 1;
+}
+
+.section {
+  margin-bottom: 32px;
+}
+
+.section-title {
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--rule-light);
+}
+
+/* Radio groups */
+.radio-group {
+  display: grid;
+  gap: 6px;
+}
+
+.radio-group.cols-2 { grid-template-columns: 1fr 1fr; }
+.radio-group.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+.radio-option input { display: none; }
+
+.radio-btn {
+  display: block;
+  padding: 10px 12px;
+  border: 1.5px solid var(--rule);
+  border-radius: 3px;
+  background: var(--cream);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.radio-btn .rb-title {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 500;
+  margin-bottom: 1px;
+  color: var(--ink);
+}
+
+.radio-btn .rb-sub {
+  display: block;
+  font-size: 0.62rem;
+  color: var(--muted);
+}
+
+.radio-option input:checked + .radio-btn {
+  border-color: var(--accent);
+  background: var(--accent-pale);
+  color: var(--accent);
+}
+
+.radio-option input:checked + .radio-btn .rb-title { color: var(--accent); }
+.radio-option input:checked + .radio-btn .rb-sub { color: var(--accent-light); opacity: 0.7; }
+
+.radio-btn:hover { border-color: var(--accent-light); }
+
+/* Text input */
+.text-input {
+  width: 100%;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--ink);
+  border: 1.5px solid var(--rule);
+  border-radius: 3px;
+  background: var(--cream);
+  padding: 10px 12px;
+  outline: none;
+  transition: border-color 0.12s;
+}
+.text-input:focus { border-color: var(--accent); }
+.text-input::placeholder { color: var(--muted); }
+
+/* Page count */
+.count-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.count-btn {
+  width: 34px;
+  height: 34px;
+  border: 1.5px solid var(--rule);
+  background: var(--cream);
+  color: var(--ink);
+  font-size: 1.1rem;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.12s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-family: 'DM Mono', monospace;
+}
+
+.count-btn:hover { border-color: var(--accent); background: var(--accent); color: white; }
+
+.count-input {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.6rem;
+  width: 64px;
+  text-align: center;
+  border: 1.5px solid var(--rule);
+  border-radius: 3px;
+  background: var(--cream);
+  padding: 4px;
+  color: var(--ink);
+  outline: none;
+  -moz-appearance: textfield;
+}
+.count-input:focus { border-color: var(--accent); }
+.count-input::-webkit-inner-spin-button,
+.count-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+.count-hint {
+  font-size: 0.62rem;
+  color: var(--muted);
+}
+
+/* Duplex banner */
+.duplex-banner {
+  padding: 9px 12px;
+  border-radius: 3px;
+  font-size: 0.65rem;
+  line-height: 1.5;
+  border: 1.5px solid;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.duplex-banner.manual { background: #fef9f0; border-color: #d4a017; color: #7a5a00; }
+.duplex-banner.supported { background: var(--green-pale); border-color: var(--green); color: var(--green); }
+.duplex-banner .icon { flex-shrink: 0; }
+
+/* Generate button */
+.generate-btn {
+  width: 100%;
+  padding: 15px;
+  background: var(--accent);
+  color: var(--paper);
+  border: none;
+  border-radius: 3px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 0 2px 8px rgba(139,58,26,0.25);
+}
+.generate-btn:hover:not(:disabled) {
+  background: var(--accent-light);
+  box-shadow: 0 4px 16px rgba(139,58,26,0.3);
+  transform: translateY(-1px);
+}
+.generate-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+/* Progress */
+.progress { display: none; margin-top: 12px; }
+.progress.visible { display: block; }
+.progress-track { height: 3px; background: var(--cream); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+.progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s ease; width: 0%; }
+.progress-text { font-size: 0.6rem; color: var(--muted); letter-spacing: 0.06em; }
+
+.settings-footer {
+  padding: 20px 28px;
+  border-top: 1px solid var(--rule-light);
+  background: var(--warm-white);
+}
+
+/* ── Right panel: preview ── */
+.preview-panel {
+  background: var(--cream);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.preview-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20px 20px, var(--rule-light) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.preview-header {
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.preview-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.preview-badge {
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  color: var(--muted);
+  background: var(--warm-white);
+}
+
+.preview-sheet {
+  width: 100%;
+  max-width: 640px;
+  position: relative;
+  z-index: 1;
+  background: white;
+  border-radius: 2px;
+  box-shadow: var(--shadow-lg), 0 0 0 1px var(--rule);
+  overflow: hidden;
+  aspect-ratio: 297 / 210;
+  min-height: 180px;
+}
+
+.preview-sheet canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.preview-info {
+  margin-top: 20px;
+  display: flex;
+  gap: 24px;
+  position: relative;
+  z-index: 1;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.preview-stat {
+  text-align: center;
+}
+
+.preview-stat-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  color: var(--accent);
+  display: block;
+  line-height: 1;
+  margin-bottom: 3px;
+}
+
+.preview-stat-label {
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── Modal ── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(28,21,16,0.6);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.visible { display: flex; }
+
+.modal {
+  background: var(--warm-white);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 36px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  margin-bottom: 4px;
+  color: var(--ink);
+}
+
+.modal-sub {
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+
+.step {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 18px;
+  align-items: flex-start;
+}
+
+.step-num {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  font-size: 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  transition: background 0.2s;
+}
+
+.step-num.done { background: var(--green); }
+
+.step-text {
+  font-size: 0.72rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.step-text strong { color: var(--accent); }
+
+.modal-actions { display: flex; gap: 10px; margin-top: 28px; flex-wrap: wrap; }
+
+.modal-btn {
+  padding: 11px 20px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 3px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.modal-btn:hover:not(:disabled) { background: var(--accent-light); }
+.modal-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.modal-btn.ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1.5px solid var(--rule);
+}
+.modal-btn.ghost:hover { border-color: var(--accent); color: var(--accent); background: transparent; }
+
+/* ── Responsive ── */
+@media (max-width: 860px) {
+  main { grid-template-columns: 1fr; }
+  .preview-panel { padding: 24px; }
+  header { padding: 20px 24px; }
+}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="logo">Traveler's<br><em>Sudoku</em></div>
-  <div class="tagline">Printable inserts for your notebook</div>
+  <div class="logo">Traveler's <em>Sudoku</em></div>
+  <div class="header-tag">A4 Printable Inserts</div>
 </header>
 
-<div class="card">
-  <div class="field">
-    <label>Notebook Size</label>
-    <div class="options">
-      <label class="option">
-        <input type="radio" name="size" value="regular" checked>
-        <span class="option-label"><strong>Regular</strong>110mm panels<br>fold + cut</span>
-      </label>
-      <label class="option">
-        <input type="radio" name="size" value="passport">
-        <span class="option-label"><strong>Passport</strong>134×98mm<br>cut only</span>
-      </label>
+<main>
+  <!-- ── Left: Settings ── -->
+  <aside class="settings-panel">
+    <div class="settings-inner">
+
+      <!-- Notebook size -->
+      <div class="section">
+        <div class="section-title">Notebook Size</div>
+        <div class="radio-group cols-2">
+          <label class="radio-option">
+            <input type="radio" name="size" value="regular" checked>
+            <span class="radio-btn">
+              <span class="rb-title">Regular</span>
+              <span class="rb-sub">110mm · fold + cut</span>
+            </span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="size" value="passport">
+            <span class="radio-btn">
+              <span class="rb-title">Passport</span>
+              <span class="rb-sub">134×98mm · cut only</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Difficulty -->
+      <div class="section">
+        <div class="section-title">Difficulty</div>
+        <div class="radio-group cols-3">
+          <label class="radio-option">
+            <input type="radio" name="difficulty" value="easy">
+            <span class="radio-btn">
+              <span class="rb-title">Easy</span>
+              <span class="rb-sub">36 removed</span>
+            </span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="difficulty" value="medium" checked>
+            <span class="radio-btn">
+              <span class="rb-title">Medium</span>
+              <span class="rb-sub">45 removed</span>
+            </span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="difficulty" value="hard">
+            <span class="radio-btn">
+              <span class="rb-title">Hard</span>
+              <span class="rb-sub">54 removed</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Font -->
+      <div class="section">
+        <div class="section-title">Font Style</div>
+        <div class="radio-group cols-3">
+          <label class="radio-option">
+            <input type="radio" name="font" value="helvetica" checked>
+            <span class="radio-btn">
+              <span class="rb-title" style="font-family:sans-serif">Classic</span>
+              <span class="rb-sub">clean & minimal</span>
+            </span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="font" value="times">
+            <span class="radio-btn">
+              <span class="rb-title" style="font-family:serif">Serif</span>
+              <span class="rb-sub">newspaper style</span>
+            </span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="font" value="courier">
+            <span class="radio-btn">
+              <span class="rb-title" style="font-family:monospace">Mono</span>
+              <span class="rb-sub">typewriter style</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Numbering -->
+      <div class="section">
+        <div class="section-title">Puzzle Numbering</div>
+        <div class="radio-group cols-3">
+          <label class="radio-option">
+            <input type="radio" name="numbering" value="sudoku" checked>
+            <span class="radio-btn">
+              <span class="rb-title">Sudoku 1</span>
+              <span class="rb-sub">default</span>
+            </span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="numbering" value="no">
+            <span class="radio-btn">
+              <span class="rb-title">No. 1</span>
+              <span class="rb-sub">classic</span>
+            </span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="numbering" value="roman">
+            <span class="radio-btn">
+              <span class="rb-title">I, II, III</span>
+              <span class="rb-sub">roman</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Personalisation -->
+      <div class="section">
+        <div class="section-title">Personalisation</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <input type="text" id="customTitle" class="text-input" placeholder="Custom title (e.g. Anna's Sudoku Book)">
+
+          <div class="radio-group cols-2">
+            <label class="radio-option">
+              <input type="radio" name="cover" value="none" checked>
+              <span class="radio-btn">
+                <span class="rb-title">No Cover</span>
+                <span class="rb-sub">puzzles only</span>
+              </span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="cover" value="cover">
+              <span class="radio-btn">
+                <span class="rb-title">Cover Page</span>
+                <span class="rb-sub">framed + title</span>
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Extras -->
+      <div class="section">
+        <div class="section-title">Extras</div>
+        <div class="radio-group cols-2" style="margin-bottom:10px;">
+          <label class="radio-option">
+            <input type="radio" name="notes" value="none" checked>
+            <span class="radio-btn">
+              <span class="rb-title">No Notes</span>
+              <span class="rb-sub">puzzle only</span>
+            </span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="notes" value="notes">
+            <span class="radio-btn">
+              <span class="rb-title">Notes</span>
+              <span class="rb-sub">lined section</span>
+            </span>
+          </label>
+        </div>
+        <div class="radio-group cols-2">
+          <label class="radio-option">
+            <input type="radio" name="datefield" value="none" checked>
+            <span class="radio-btn">
+              <span class="rb-title">No Date</span>
+              <span class="rb-sub">clean layout</span>
+            </span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="datefield" value="date">
+            <span class="radio-btn">
+              <span class="rb-title">Date Field</span>
+              <span class="rb-sub">Date: ____</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Pages -->
+      <div class="section">
+        <div class="section-title">Number of Pages</div>
+        <div class="count-row">
+          <button class="count-btn" id="decBtn">−</button>
+          <input type="number" id="countDisplay" class="count-input" value="1" min="1" max="999">
+          <button class="count-btn" id="incBtn">+</button>
+          <span class="count-hint" id="countHint">= 8 sudokus</span>
+        </div>
+      </div>
+
+      <!-- Printer -->
+      <div class="section">
+        <div class="section-title">Printer</div>
+        <div id="duplexBanner" class="duplex-banner manual">
+          <span class="icon">⚠</span>
+          <span id="duplexText">Couldn't confirm duplex support. Two PDFs will be generated — Side 1 first, then Side 2 after reinserting.<br><a href="#" id="duplexOverride" style="color:var(--accent);font-size:0.65rem;">My printer supports duplex →</a></span>
+        </div>
+      </div>
+
     </div>
-  </div>
 
-  <div class="field">
-    <label>Difficulty</label>
-    <div class="options" style="grid-template-columns:1fr 1fr 1fr;">
-      <label class="option">
-        <input type="radio" name="difficulty" value="easy">
-        <span class="option-label"><strong>Easy</strong>more given<br>numbers</span>
-      </label>
-      <label class="option">
-        <input type="radio" name="difficulty" value="medium" checked>
-        <span class="option-label"><strong>Medium</strong>balanced<br>challenge</span>
-      </label>
-      <label class="option">
-        <input type="radio" name="difficulty" value="hard">
-        <span class="option-label"><strong>Hard</strong>fewer given<br>numbers</span>
-      </label>
+    <!-- Generate -->
+    <div class="settings-footer">
+      <button class="generate-btn" id="generateBtn">Generate &amp; Download PDF</button>
+      <div class="progress" id="progress">
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-text" id="progressText">Generating puzzles...</div>
+      </div>
     </div>
-  </div>
+  </aside>
 
-  <div class="field">
-    <label>Custom Title <span style="opacity:0.5;font-size:0.6rem;text-transform:none;letter-spacing:0">(optional)</span></label>
-    <div style="padding-left:28px;">
-      <input type="text" id="customTitle" placeholder="e.g. Anna's Sudoku Book"
-        style="width:100%;font-family:'DM Mono',monospace;font-size:0.8rem;color:var(--ink);
-               border:1.5px solid var(--rule);border-radius:2px;background:var(--cream);
-               padding:10px 12px;outline:none;transition:border-color 0.15s;"
-        onfocus="this.style.borderColor='var(--accent)'"
-        onblur="this.style.borderColor='var(--rule)'"
-      >
+  <!-- ── Right: Preview ── -->
+  <section class="preview-panel">
+    <div class="preview-header">
+      <span class="preview-label">Live Preview</span>
+      <span class="preview-badge" id="previewBadge">Regular · Medium</span>
     </div>
-  </div>
 
-  <div class="field">
-    <label>Cover Page</label>
-    <div class="options" style="padding-left:28px;">
-      <label class="option">
-        <input type="radio" name="cover" value="none" checked>
-        <span class="option-label"><strong>None</strong>no cover<br>page</span>
-      </label>
-      <label class="option">
-        <input type="radio" name="cover" value="cover">
-        <span class="option-label"><strong>Cover</strong>elegant frame,<br>title or blank</span>
-      </label>
+    <div class="preview-sheet">
+      <canvas id="previewCanvas"></canvas>
     </div>
-  </div>
 
-  <div class="field">
-    <label>Font Style</label>
-    <div class="options" style="grid-template-columns:1fr 1fr 1fr; padding-left:28px;">
-      <label class="option">
-        <input type="radio" name="font" value="helvetica" checked>
-        <span class="option-label" style="font-family:sans-serif;"><strong>Classic</strong>clean &amp;<br>minimal</span>
-      </label>
-      <label class="option">
-        <input type="radio" name="font" value="times">
-        <span class="option-label" style="font-family:serif;"><strong style="font-family:serif;">Serif</strong>traditional<br>newspaper</span>
-      </label>
-      <label class="option">
-        <input type="radio" name="font" value="courier">
-        <span class="option-label" style="font-family:monospace;"><strong style="font-family:monospace;">Mono</strong>typewriter<br>style</span>
-      </label>
+    <div class="preview-info">
+      <div class="preview-stat">
+        <span class="preview-stat-val" id="statPuzzles">8</span>
+        <span class="preview-stat-label">Sudokus</span>
+      </div>
+      <div class="preview-stat">
+        <span class="preview-stat-val" id="statSheets">1</span>
+        <span class="preview-stat-label">Sheets to Print</span>
+      </div>
+      <div class="preview-stat">
+        <span class="preview-stat-val" id="statPages">2</span>
+        <span class="preview-stat-label">PDF Pages</span>
+      </div>
     </div>
-  </div>
-
-  <div class="field">
-    <label>Notes Section</label>
-    <div class="options" style="padding-left:28px;">
-      <label class="option">
-        <input type="radio" name="notes" value="none" checked>
-        <span class="option-label"><strong>None</strong>no notes<br>section</span>
-      </label>
-      <label class="option">
-        <input type="radio" name="notes" value="notes">
-        <span class="option-label"><strong>Notes</strong>lined space<br>below puzzle</span>
-      </label>
-    </div>
-  </div>
-
-  <div class="field">
-    <label>Puzzle Numbering</label>
-    <div class="options" style="grid-template-columns:1fr 1fr 1fr; padding-left:28px;">
-      <label class="option">
-        <input type="radio" name="numbering" value="sudoku" checked>
-        <span class="option-label"><strong>Sudoku 1</strong>default<br>style</span>
-      </label>
-      <label class="option">
-        <input type="radio" name="numbering" value="no">
-        <span class="option-label"><strong>No. 1</strong>classic<br>style</span>
-      </label>
-      <label class="option">
-        <input type="radio" name="numbering" value="roman">
-        <span class="option-label"><strong>I, II, III</strong>roman<br>numerals</span>
-      </label>
-    </div>
-  </div>
-
-  <div class="field">
-    <label>Date Field</label>
-    <div class="options" style="padding-left:28px;">
-      <label class="option">
-        <input type="radio" name="datefield" value="none" checked>
-        <span class="option-label"><strong>None</strong>no date<br>field</span>
-      </label>
-      <label class="option">
-        <input type="radio" name="datefield" value="date">
-        <span class="option-label"><strong>Date</strong>blank line<br>to fill in</span>
-      </label>
-    </div>
-  </div>
-
-  <div class="field">
-    <label>Number of Pages</label>
-    <div class="count-row">
-      <button class="count-btn" id="decBtn">−</button>
-      <input type="number" id="countDisplay" value="1" min="1" max="999"
-        style="font-family:'DM Serif Display',serif;font-size:2rem;color:var(--ink);width:70px;text-align:center;border:1.5px solid var(--rule);border-radius:2px;background:var(--cream);padding:4px;">
-      <button class="count-btn" id="incBtn">+</button>
-      <div class="count-hint" id="countHint">= 8 sudokus</div>
-    </div>
-  </div>
-
-  <div class="field" style="margin-bottom:16px;">
-    <label>Printer</label>
-    <div id="duplexBanner" class="duplex-banner manual">
-      <span class="icon">⏳</span>
-      <span id="duplexText">Checking printer support...</span>
-    </div>
-  </div>
-
-  <button class="generate-btn" id="generateBtn">Generate PDF</button>
-
-  <div class="progress" id="progress">
-    <div class="progress-bar-track"><div class="progress-bar-fill" id="progressFill"></div></div>
-    <div class="progress-text" id="progressText">Generating puzzles...</div>
-  </div>
-</div>
-
-<footer>generates a fresh puzzle every time &nbsp;·&nbsp; print on A4 landscape</footer>
+  </section>
+</main>
 
 <!-- Manual duplex modal -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <div class="modal-title">Two-step printing</div>
-    <div class="modal-subtitle" id="modalSubtitle">YOUR PRINTER DOESN'T SUPPORT AUTOMATIC DOUBLE-SIDED PRINTING</div>
-    <div class="steps" id="modalSteps"></div>
-    <div>
+    <div class="modal-sub" id="modalSubtitle">No automatic duplex detected</div>
+    <div id="modalSteps"></div>
+    <div class="modal-actions">
       <button class="modal-btn" id="modalBtn1">Download Side 1</button>
-      <button class="modal-btn secondary" id="modalClose">Close</button>
+      <button class="modal-btn ghost" id="modalClose">Close</button>
     </div>
   </div>
 </div>
@@ -337,53 +754,19 @@ const modalOverlay = document.getElementById('modalOverlay');
 const modalBtn1 = document.getElementById('modalBtn1');
 const modalClose = document.getElementById('modalClose');
 
-// ── Duplex detection ──────────────────────────────────────────────────────────
-function detectDuplex() {
-  // Use the CSS media query approach + navigator hints
-  const mm = window.matchMedia('print');
-  // Check via navigator.userAgentData or legacy navigator hints
-  // We can also use the PrintEvent API where available
-  // Realistically, browser APIs don't expose duplex reliably —
-  // but we can check via a hidden print iframe and CSS @media
-  // Best available: check if matchMedia supports 'duplex' media feature
-  const canQuery = window.CSS && CSS.supports('color', 'red');
-  
-  // Try the newer CSS media feature for duplex
-  let supported = false;
-  try {
-    // This works in some Chromium builds
-    supported = window.matchMedia('(duplex: duplex)').matches;
-  } catch(e) {}
-
-  // Fallback: check navigator for clues
-  if (!supported) {
-    const ua = navigator.userAgent.toLowerCase();
-    // On most modern desktop browsers, we just can't know for sure
-    // so we default to manual with an option to override
-    supported = false;
-  }
-
-  duplexSupported = supported;
-  updateDuplexBanner();
-}
-
-function updateDuplexBanner() {
-  if (duplexSupported) {
+// ── Duplex: always manual by default, click to enable ────────────────────────
+duplexSupported = false;
+duplexBanner.addEventListener('click', e => {
+  if (e.target.id === 'duplexOverride') {
+    e.preventDefault();
+    duplexSupported = true;
     duplexBanner.className = 'duplex-banner supported';
-    duplexBanner.innerHTML = `<span class="icon">✓</span><span>Your printer supports double-sided printing — one PDF will be generated.</span>`;
-  } else {
-    duplexBanner.className = 'duplex-banner manual';
-    duplexBanner.innerHTML = `
-      <span class="icon">⚠</span>
-      <span>Couldn't confirm duplex support. Two PDFs will be generated — Side 1 first, then Side 2 after reinserting the paper.
-      <br><a href="#" id="duplexOverride" style="color:var(--accent);font-size:0.65rem;">My printer does support it →</a></span>`;
-    document.getElementById('duplexOverride')?.addEventListener('click', e => {
-      e.preventDefault(); duplexSupported = true; updateDuplexBanner();
-    });
+    duplexBanner.innerHTML = '<span class="icon">✓</span><span>Duplex enabled — one combined PDF will be generated.</span>';
   }
-}
+});
 
-detectDuplex();
+
+// ── Duplex detection ──────────────────────────────────────────────────────────
 
 // ── UI helpers ────────────────────────────────────────────────────────────────
 function getSize() { return document.querySelector('input[name="size"]:checked').value; }
@@ -764,6 +1147,181 @@ function setProgress(pct, text) {
 }
 
 updateHint();
+
+// ── Live preview ──────────────────────────────────────────────────────────────
+function updatePreview() {
+  const size = getSize();
+  const diff = getDifficulty();
+  const pages = parseInt(document.getElementById('countDisplay').value) || 1;
+  const hasCover = getCover() === 'cover';
+
+  // Update badge and stats
+  document.getElementById('previewBadge').textContent =
+    `${size.charAt(0).toUpperCase()+size.slice(1)} · ${diff.charAt(0).toUpperCase()+diff.slice(1)}`;
+  document.getElementById('statPuzzles').textContent = pages * 8;
+  document.getElementById('statSheets').textContent = pages + (hasCover ? 1 : 0);
+  document.getElementById('statPages').textContent = (pages + (hasCover ? 1 : 0)) * 2;
+
+  // Draw preview on canvas
+  const canvas = document.getElementById('previewCanvas');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const W = rect.width, H = rect.height;
+  if (!W || !H) { setTimeout(updatePreview, 150); return; }
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  canvas.width = Math.round(W * window.devicePixelRatio);
+  canvas.height = Math.round(H * window.devicePixelRatio);
+  const ctx = canvas.getContext('2d');
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+  // Scale: 297mm -> W px
+  const scale = W / 297;
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, H);
+
+  if (size === 'regular') {
+    drawRegularPreview(ctx, W, H, scale);
+  } else {
+    drawPassportPreview(ctx, W, H, scale);
+  }
+}
+
+function drawRegularPreview(ctx, W, H, scale) {
+  const colW = 110 * scale, halfH = H / 2, margin = 5 * scale;
+  const sudSize = Math.min(colW - 2*margin, halfH - 14*scale);
+  const vGap = (halfH - sudSize) / 2;
+  const hasNotes = getNotes() === 'notes';
+  const notesH = hasNotes ? 18*scale : 0;
+  const actualSud = Math.min(colW - 2*margin, halfH - 14*scale - notesH);
+  const actualVGap = (halfH - actualSud - notesH) / 2;
+
+  // Draw 4 puzzle placeholders
+  for (const [col, row] of [[0,0],[0,1],[1,0],[1,1]]) {
+    const ox = col*colW + margin;
+    const oy = row*halfH + actualVGap;
+    drawPreviewGrid(ctx, ox, oy, actualSud, scale);
+    if (hasNotes) drawPreviewNotes(ctx, ox, oy + actualSud + 2*scale, actualSud, scale);
+  }
+
+  // Fold line
+  ctx.strokeStyle = 'rgba(100,100,100,0.5)';
+  ctx.lineWidth = 0.8;
+  ctx.setLineDash([6, 4]);
+  ctx.beginPath(); ctx.moveTo(colW, 0); ctx.lineTo(colW, H); ctx.stroke();
+
+  // Cut line
+  ctx.setLineDash([2, 4]);
+  ctx.strokeStyle = 'rgba(80,80,80,0.5)';
+  ctx.beginPath(); ctx.moveTo(2*colW, 0); ctx.lineTo(2*colW, H); ctx.stroke();
+
+  // Horizontal guide
+  ctx.setLineDash([3, 5]);
+  ctx.strokeStyle = 'rgba(180,180,180,0.6)';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath(); ctx.moveTo(0, H/2); ctx.lineTo(2*colW, H/2); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Waste strip hatching
+  ctx.fillStyle = 'rgba(220,215,208,0.4)';
+  ctx.fillRect(2*colW, 0, W - 2*colW, H);
+
+  // Labels
+  ctx.font = `${4.5*scale}px DM Mono, monospace`;
+  ctx.fillStyle = 'rgba(120,120,120,0.8)';
+  ctx.fillText('fold', colW + 2*scale, H/2 - 8*scale);
+  ctx.fillText('cut', 2*colW + 2*scale, H/2 - 8*scale);
+  ctx.fillText('waste', 2*colW + 4*scale, H/2);
+}
+
+function drawPassportPreview(ctx, W, H, scale) {
+  const pw = 134*scale, ph = 98*scale;
+  const totalW = pw*2, totalH = ph*2;
+  const startX = (W - totalW)/2, startY = (H - totalH)/2;
+  const hasNotes = getNotes() === 'notes';
+  const notesH = hasNotes ? 14*scale : 0;
+  const labelH = 8*scale;
+  const gridSize = Math.min(pw - 8*scale, ph - 8*scale - labelH - notesH);
+  const vOff = (ph - gridSize - labelH - notesH)/2;
+  const hOff = (pw - gridSize)/2;
+
+  for (const [col, row] of [[0,0],[1,0],[0,1],[1,1]]) {
+    const ox = startX + col*pw + hOff;
+    const oy = startY + row*ph + vOff;
+    // Panel bg
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(startX + col*pw, startY + row*ph, pw, ph);
+    ctx.strokeStyle = 'rgba(160,160,160,0.4)';
+    ctx.lineWidth = 0.5;
+    ctx.strokeRect(startX + col*pw, startY + row*ph, pw, ph);
+    drawPreviewGrid(ctx, ox, oy, gridSize, scale);
+    if (hasNotes) drawPreviewNotes(ctx, ox, oy + gridSize + 2*scale, gridSize, scale);
+  }
+
+  // Cut lines
+  ctx.strokeStyle = 'rgba(80,80,80,0.5)';
+  ctx.lineWidth = 0.8;
+  ctx.setLineDash([2, 4]);
+  ctx.beginPath(); ctx.moveTo(startX+pw, startY-4*scale); ctx.lineTo(startX+pw, startY+totalH+4*scale); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(startX-4*scale, startY+ph); ctx.lineTo(startX+totalW+4*scale, startY+ph); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Background outside panels
+  ctx.fillStyle = 'rgba(220,215,208,0.3)';
+  ctx.fillRect(0, 0, startX, H);
+  ctx.fillRect(startX+totalW, 0, W-(startX+totalW), H);
+  ctx.fillRect(startX, 0, totalW, startY);
+  ctx.fillRect(startX, startY+totalH, totalW, H-(startY+totalH));
+}
+
+function drawPreviewGrid(ctx, ox, oy, size, scale) {
+  const cell = size / 9;
+  // Light fill
+  ctx.fillStyle = '#fefefe';
+  ctx.fillRect(ox, oy, size, size);
+
+  // Sample numbers (sparse)
+  const sample = [[0,1,7],[0,4,3],[1,0,9],[2,3,5],[3,6,2],[4,4,8],[5,1,4],[6,7,6],[7,2,1],[8,5,3]];
+  ctx.font = `${cell*0.52}px DM Mono, monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#1c1510';
+  for (const [r,c,v] of sample) {
+    ctx.fillText(String(v), ox + c*cell + cell/2, oy + r*cell + cell/2);
+  }
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+
+  // Grid lines
+  ctx.strokeStyle = '#1c1510';
+  for (let i = 0; i <= 9; i++) {
+    ctx.lineWidth = i % 3 === 0 ? 0.8 : 0.2;
+    ctx.beginPath(); ctx.moveTo(ox, oy+i*cell); ctx.lineTo(ox+size, oy+i*cell); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ox+i*cell, oy); ctx.lineTo(ox+i*cell, oy+size); ctx.stroke();
+  }
+}
+
+function drawPreviewNotes(ctx, ox, oy, width, scale) {
+  ctx.strokeStyle = 'rgba(180,180,180,0.7)';
+  ctx.lineWidth = 0.3;
+  const lineGap = 4.5*scale;
+  for (let i = 0; i < 3; i++) {
+    const ly = oy + 5*scale + i*lineGap;
+    ctx.beginPath(); ctx.moveTo(ox, ly); ctx.lineTo(ox+width, ly); ctx.stroke();
+  }
+}
+
+// Wire preview to all settings changes
+document.querySelectorAll('input[type=radio], input[type=number], input[type=text]')
+  .forEach(el => el.addEventListener('change', updatePreview));
+document.getElementById('countDisplay').addEventListener('input', updatePreview);
+document.getElementById('customTitle').addEventListener('input', updatePreview);
+
+// Initial preview after layout settles
+setTimeout(updatePreview, 100);
+setTimeout(updatePreview, 500);
+setTimeout(updatePreview, 1000);
+window.addEventListener('resize', updatePreview);
 </script>
 </body>
 </html>
