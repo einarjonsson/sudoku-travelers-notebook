@@ -1,4 +1,4 @@
-# sudoku-travelers-notebook
+# tn-sudoku
 
 A PowerShell script and web app that generates printable Sudoku booklets designed for Traveler's Notebook inserts.
 
